@@ -61,7 +61,27 @@ const MobileCameraCapture = () => {
     canvas.width = width;
     canvas.height = height;
 
+    // Draw the image
     context.drawImage(video, 0, 0, width, height);
+
+    // Get pixel data
+    const imageData = context.getImageData(0, 0, width, height);
+    const data = imageData.data;
+
+    // Convert to grayscale
+    for (let i = 0; i < data.length; i += 4) {
+      const red = data[i];
+      const green = data[i + 1];
+      const blue = data[i + 2];
+      // Calculate grayscale value
+      const gray = 0.3 * red + 0.59 * green + 0.11 * blue;
+      data[i] = data[i + 1] = data[i + 2] = gray; // Set R, G, B to gray
+    }
+
+    // Put modified data back
+    context.putImageData(imageData, 0, 0);
+
+    // Save as image
     const dataUrl = canvas.toDataURL('image/png');
     setPhoto(dataUrl);
   };
