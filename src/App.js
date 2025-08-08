@@ -3,14 +3,14 @@ import logo from './logo.svg';
 import './App.css';
 import InstallPrompt from './InstallPrompt';
 import { MobileCameraCaptureWithOverlay } from './MobileCameraCapture';
+import InvoiceForm from './InvoiceForm';
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <h1>Mobile Camera Capture</h1>
-        <MobileCameraCaptureWithOverlay />
+        <h1>Invoice Capture</h1>
+        <InvoiceForm />
       </header>
       <InstallPrompt />
     </div>
