@@ -4,13 +4,14 @@ import './App.css';
 import InstallPrompt from './InstallPrompt';
 import { MobileCameraCaptureWithOverlay } from './MobileCameraCapture';
 import InvoiceForm from './InvoiceForm';
+import PackageSubscriptionForm from './PackageSubscriptionForm';
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
         <h1>Invoice Capture</h1>
-        <InvoiceForm />
+        <PackageSubscriptionForm />
       </header>
       <InstallPrompt />
     </div>
