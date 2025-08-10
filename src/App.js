@@ -5,13 +5,14 @@ import InstallPrompt from './InstallPrompt';
 import { MobileCameraCaptureWithOverlay } from './MobileCameraCapture';
 import InvoiceForm from './InvoiceForm';
 import PackageSubscriptionForm from './PackageSubscriptionForm';
+import CheckoutButton from './CheckoutButton';
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Invoice Capture</h1>
-        <PackageSubscriptionForm />
+        <h1>Checkout Form</h1>
+        <CheckoutButton totalAmount="100" availableMethods="['tarjeta', 'google-pay', 'bizum', 'amazon-pay', 'apple-pay']"/>
       </header>
       <InstallPrompt />
     </div>
