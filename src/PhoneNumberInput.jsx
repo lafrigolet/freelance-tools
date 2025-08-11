@@ -91,7 +91,7 @@ function CountrySelect({
           );
         }}
         MenuProps={{
-          PaperProps: { style: { maxHeight: 360, width: 300 } },
+          PaperProps: { style: { maxHeight: 360, width: 40 } },
         }}
       >
         <ListSubheader disableSticky sx={{ p: 1 }}>
@@ -99,7 +99,7 @@ function CountrySelect({
             inputRef={inputRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search: US / +1"
+            placeholder="Search"
             size="small"
             fullWidth
             onKeyDown={(e) => e.stopPropagation()}
