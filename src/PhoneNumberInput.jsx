@@ -141,38 +141,50 @@ export default function PhoneNumberInput({
     const f = formatForCountry(d, countryCode);
     setFormatted(f);
     validateAndEmit(countryCode, d, f);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const validateAndEmit = (cc, d, f) => {
-    const rule = COUNTRIES.find((c) => c.code === cc);
-    const exp = rule?.len;
-    const isValid = exp ? d.length === exp : d.length >= 6;
-    setError(
-      isValid
-        ? null
-        : exp === 10
-        ? 'Enter a 10-digit number (e.g., 555 123 4567)'
-        : exp
-        ? `Enter a ${exp}-digit number`
-        : 'Enter a valid number'
-    );
-    onChange?.({ countryCode: cc, digits: d, formatted: f, isValid });
-  };
+const validateAndEmit = (cc, d, f) => {
+  const rule = COUNTRIES.find((c) => c.code === cc);
+  const exp = rule?.len;
 
-  const handlePhoneChange = (e) => {
-    const d = digitsOnly(e.target.value);
-    const f = formatForCountry(d, countryCode);
-    setFormatted(f);
-    const rule = COUNTRIES.find((c) => c.code === countryCode);
-    const isValid = rule ? d.length === rule.len : d.length >= 6;
-    setError(
-      isValid
-        ? null
-        : `Enter a ${rule?.len || 'valid'}-digit number`
-    );
-    onChange?.({ countryCode, digits: d, formatted: f, isValid });
-  };
+  // 🟢 Don't show error if no digits typed yet
+  if (d.length === 0) {
+    setError(null);
+    onChange?.({ countryCode: cc, digits: d, formatted: f, isValid: false });
+    return;
+  }
+
+  const isValid = exp ? d.length === exp : d.length >= 6;
+  setError(
+    isValid
+      ? null
+      : exp === 10
+      ? "Enter a 10-digit number (e.g., 555 123 4567)"
+      : exp
+      ? `Enter a ${exp}-digit number`
+      : "Enter a valid number"
+  );
+  onChange?.({ countryCode: cc, digits: d, formatted: f, isValid });
+};
+
+const handlePhoneChange = (e) => {
+  const d = digitsOnly(e.target.value);
+  const f = formatForCountry(d, countryCode);
+  setFormatted(f);
+
+  const rule = COUNTRIES.find((c) => c.code === countryCode);
+
+  if (d.length === 0) {
+    setError(null);
+    onChange?.({ countryCode, digits: d, formatted: f, isValid: false });
+    return;
+  }
+
+  const isValid = rule ? d.length === rule.len : d.length >= 6;
+  setError(isValid ? null : `Enter a ${rule?.len || "valid"}-digit number`);
+  onChange?.({ countryCode, digits: d, formatted: f, isValid });
+};
+
 
   const handleCountryChange = (event, option) => {
     if (!option) return;
@@ -188,9 +200,10 @@ export default function PhoneNumberInput({
   return (
     <Grid container spacing={1} alignItems="flex-start">
 
-      <Grid item xs={6} sm={5}>
+      <Grid gridColumn={{ xs: "span 6", sm: "span 5"}}>
         <CountrySelect
           value={countryCode}
+          disabled={disabled}
           onChange={(newCode) => {
             setCountryCode(newCode);
             const d = digitsOnly(formatted);
@@ -201,7 +214,7 @@ export default function PhoneNumberInput({
         />
       </Grid>
 
-      <Grid item xs>
+      <Grid >
         <TextField
           margin={margin}
           label="Phone Number"

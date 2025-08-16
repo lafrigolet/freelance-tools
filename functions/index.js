@@ -1,156 +1,145 @@
-const { onCall } = require("firebase-functions/v2/https");
-const { initializeApp } = require("firebase-admin/app");
-const { getAuth } = require("firebase-admin/auth");
-const { getFirestore } = require("firebase-admin/firestore");
-const { onRequest } = require("firebase-functions/v2/https");
+import { onCall, onRequest } from "firebase-functions/v2/https";
+import { initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+import { getFirestore } from "firebase-admin/firestore";
+import { listUsers, addUser, deleteUser, setUserRole } from "./users.js";
+import smtpConfig from "./nodemailer-conf.js";
+import nodemailer from "nodemailer";
+import { randomUUID } from "crypto";
 
 initializeApp();
 
-exports.listUsers = onCall({ region: "us-central1" }, async (request) => {
-  const context = request;
-
-  console.log("Auth context: ", context.auth);
-
-  if (!context.auth) {
-    throw new Error("User must be authenticated");
-  }
-
-  if (context.auth.token.role !== "admin") {
-    throw new Error("Admin role required");
-  }
-
-  const auth = getAuth();
-  const list = await auth.listUsers(1000);
-
-  return {
-    users: list.users.map((u) => ({
-      uid: u.uid,
-      email: u.email,
-      role: u.customClaims?.role || "user",
-    })),
-  };
-});
-
-// Add new user with default role
-exports.addUser = onCall({ region: "us-central1" }, async ({ auth, data }) => {
-  if (auth?.token?.role !== "admin") {
-    throw new functions.https.HttpsError("permission-denied", "Only admins can add users.");
-  }
-
-  const { email, role } = data;
-  const user = await getAuth().createUser({ email });
-  await getAuth().setCustomUserClaims(user.uid, { role: role || "user" });
-  return { message: `User ${email} created with role ${role || "user"}` };
-});
-
-
-// Delete user
-exports.deleteUser = onCall({ region: "us-central1" }, async ({ auth, data }) => {
-  if (auth?.token?.role !== "admin") {
-    throw new functions.https.HttpsError("permission-denied", "Only admins can delete users.");
-  }
-
-  const { uid } = data;
-  if (!uid) {
-    throw new Error("'uid' is required.");
-  }
-
-  await getAuth().deleteUser(uid);
-  return { message: `User ${uid} deleted.` };
-});
-
-// Set user role (admin, manager, user)
-exports.setUserRole = onCall({ region: "us-central1" }, async ({ auth, data }) => {
-  // Only allow users with role "admin" to set roles
-  if (auth?.token?.role !== "admin") {
-    throw new Error("Only admins can set roles.");
-  }
-
-  const { uid, role } = data;
-
-  // Basic input validation
-  if (!uid || !role) {
-    throw new Error("Both 'uid' and 'role' are required.");
-  }
-
-  const validRoles = ["admin", "manager", "user"];
-  if (!validRoles.includes(role)) {
-    throw new Error(`Invalid role: '${role}'. Allowed: ${validRoles.join(", ")}`);
-  }
-
-  const authClient = getAuth();
-  await authClient.setCustomUserClaims(uid, { role });
-
-  return { message: `Role '${role}' set for user ${uid}` };
-});
-
-// exports.magicLinkHandler = onRequest({ region: "us-central1" }, async (req, res) => {
-//   const db = getFirestore();
-//   const auth = getAuth();
-
-//   console.log('Starting magicLinkHandler...');
-  
-//   const oobCode = req.query.oobCode;
-
-//   if (!oobCode) {
-//     return res.status(400).send("Missing oobCode.");
-//   }
-
-//   try {
-//     // Firebase uses this to validate email sign-in links too
-//     const email = await auth.verifyPasswordResetCode(oobCode);
-
-//     let user;
-//     try {
-//       user = await auth.getUserByEmail(email);
-//     } catch {
-//       user = await auth.createUser({ email });
-//     }
-
-//     // Optional: set default role
-//     if (!user.customClaims || !user.customClaims.role) {
-//       await auth.setCustomUserClaims(user.uid, { role: "user" });
-//     }
-
-//     const token = await auth.createCustomToken(user.uid);
-
-//     await db.collection("magicLinks").doc(email).set({
-//       token,
-//       createdAt: Date.now(),
-//     });
-
-//     return res.status(200).send("You may now return to the app.");
-//   } catch (err) {
-//     console.error("Magic link error:", err);
-//     return res.status(400).send("Invalid or expired link.");
-//   }
-// });
-
-// Mocked version for testing only
-exports.magicLinkHandler = onRequest({ region: "us-central1" }, async (req, res) => {
+const sendMagicLinkEmail = onCall(async (req) => {
+  console.log("------sendMagicLinkEmail----------");
   const db = getFirestore();
-  const auth = getAuth();
+  const { to, appName, recipientName, expirationMinutes, supportEmail } = req.data;
 
-  const email = req.query.email || "test@example.com"; // fallback for emulator
+  if (!to) throw new Error("Missing email address");
 
-  try {
-    let user;
-    try {
-      user = await auth.getUserByEmail(email);
-    } catch {
-      user = await auth.createUser({ email });
+  // 1. Generate our own magic link token
+  const token = randomUUID();
+
+  // 2. Save token mapping in Firestore
+  await db.collection("pendingMagicLinks").doc(token).set({
+    email: to,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + expirationMinutes * 60 * 1000
+  });
+
+  // 3. Build link to your magic link handler
+  const magicLinkUrl =
+    `${process.env.FUNCTIONS_EMULATOR === "true"
+      ? "http://127.0.0.1:5001/my-firebase-demo-555/us-central1"
+      : "https://us-central1-my-firebase-demo-555.cloudfunctions.net"}` +
+    `/magicLinkHandler?token=${encodeURIComponent(token)}`;
+
+
+  // 4. Email content
+  const subject = `${appName} Sign-In Confirmation`;
+
+  const text = `
+Hi${recipientName ? " " + recipientName : ""},
+
+We received a request to sign in to your ${appName} account.
+
+Click the link below to confirm and sign in:
+${magicLinkUrl}
+
+This link will expire in ${expirationMinutes} minutes. If you didn’t request this, you can safely ignore this email.
+
+— The ${appName} Team
+${supportEmail}
+`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; line-height: 1.5; color: #333;">
+  <h2>Sign in to ${appName}</h2>
+  <p>Hi${recipientName ? " " + recipientName : ""},</p>
+  <p>We received a request to sign in to your ${appName} account.</p>
+  <p>
+    <a href="${magicLinkUrl}" style="background-color: #4CAF50; color: white; padding: 10px 20px;
+       text-decoration: none; border-radius: 4px; display: inline-block;">
+      Confirm Sign-In
+    </a>
+  </p>
+  <p>This link will expire in <strong>${expirationMinutes} minutes</strong>.</p>
+  <p>If you didn’t request this, you can safely ignore this email.</p>
+  <p>— The ${appName} Team<br>
+     <a href="mailto:${supportEmail}">${supportEmail}</a></p>
+</body>
+</html>
+`;
+
+  // 5. Send email via Nodemailer
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: "billapp74@gmail.com",
+      pass: "zudu sttu wnmf wylr"
     }
+  });
+  
+  const info = await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to,
+    subject,
+    text,
+    html
+  });
 
-    const token = await auth.createCustomToken(user.uid);
-
-    await db.collection("magicLinks").doc(email).set({
-      token,
-      createdAt: Date.now(),
-    });
-
-    return res.status(200).send(`Fake sign-in complete for ${email}.`);
-  } catch (err) {
-    console.error(err);
-    return res.status(400).send("Mock sign-in failed.");
-  }
+  return {success: true, info };
 });
+
+const magicLinkHandler = onRequest(async (req, res) => {
+  console.log('----------magicLinkHandler----------');
+  const auth = getAuth();
+  const db = getFirestore();
+
+  const tokenParam = req.query.token;
+  if (!tokenParam) return res.status(400).send("Missing token");
+
+  const snap = await db.collection("pendingMagicLinks").doc(tokenParam).get();
+  if (!snap.exists) return res.status(400).send("Invalid or expired link");
+
+  const { email, expiresAt } = snap.data();
+  if (Date.now() > expiresAt) {
+    await snap.ref.delete();
+    return res.status(400).send("Link expired");
+  }
+
+  await db.collection("pendingMagicLinks").doc(tokenParam).delete();
+
+  let user;
+  try {
+    user = await auth.getUserByEmail(email);
+  } catch {
+    user = await auth.createUser({ email });
+  }
+
+  // Optionally set a default role
+  if (!user.customClaims?.role) {
+    await auth.setCustomUserClaims(user.uid, { role: "user" });
+  }
+
+  // Create a Firebase custom token
+  const token = await auth.createCustomToken(user.uid);
+  await db.collection("magicLinks").doc(email).set({ token, createdAt: Date.now() });
+  console.log("  // Create a Firebase custom token");
+
+  res.status(200).send("You may now return to the app");
+});
+
+export {
+  listUsers,
+  addUser,
+  deleteUser,
+  setUserRole,
+  sendMagicLinkEmail,
+  magicLinkHandler
+};
+
+

@@ -6,20 +6,23 @@ import { MobileCameraCaptureWithOverlay } from './MobileCameraCapture';
 import InvoiceForm from './InvoiceForm';
 import PackageSubscriptionForm from './PackageSubscriptionForm';
 import CheckoutButton from './CheckoutButton';
-import LoginDialog from './LoginDialog';
+import { LoginDialog, LoginButton } from './LoginDialog';
 import SignUpDialog from './SignUpDialog';
+import { AuthProvider } from "./contexts/AuthContext";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Login Form</h1>
-        {/*<CheckoutButton totalAmount="100" availableMethods="['tarjeta', 'google-pay', 'bizum', 'amazon-pay', 'apple-pay']"/>--*/}
-        <LoginDialog />
-        <SignUpDialog />
-      </header>
-      <InstallPrompt />
-    </div>
+    <AuthProvider>
+      <div className="App">
+        <header className="App-header">
+          <h1>Login Form</h1>
+          {/*<CheckoutButton totalAmount="100" availableMethods="['tarjeta', 'google-pay', 'bizum', 'amazon-pay', 'apple-pay']"/>*/}
+          <LoginButton />
+          <SignUpDialog />
+        </header>
+        <InstallPrompt />
+      </div>
+    </AuthProvider>
   );
 }
 

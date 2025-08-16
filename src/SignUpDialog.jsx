@@ -1,7 +1,26 @@
-import React, { useState } from 'react';
-import { Divider, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, CircularProgress, Typography, Grid, InputLabel, MenuItem, FormControl, Select, InputAdornment } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Divider,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+  CircularProgress,
+  Typography,
+  Alert,
+  Grid,
+  InputLabel,
+  MenuItem,
+  FormControl,
+  Select,
+  InputAdornment
+} from '@mui/material';
 import Flag from 'react-world-flags';
 import PhoneNumberInput from './PhoneNumberInput';
+import { signUpUser } from "./firebase-emulators";
+import { useAuthContext } from "./contexts/AuthContext";
 
 const SignUpDialog = ({ size = 'small' }) => {
   // States to manage open/close dialog, form inputs, loading, and error messages
@@ -12,24 +31,20 @@ const SignUpDialog = ({ size = 'small' }) => {
   const [countryCode, setCountryCode] = useState('+34'); // Default to Spain
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('Please enter your details to sign up.');
-
+  const [info, setInfo] = useState('Please enter your details to sign up.');
+  const [severity, setSeverity] = useState('info');
+  const unsubscribeRef = useRef(null);
+  const timeoutRef = useRef(null);
+  const { user, setUser } = useAuthContext();
+  
   // Error states for each field
   const [emailError, setEmailError] = useState(null);
   const [phoneError, setPhoneError] = useState(null);
-  const [generalError, setGeneralError] = useState(null);
+  const [firstNameError, setFirstNameError] = useState(null);
+  const [lastNameError, setLastNameError] = useState(null);
 
   // Regular expression for email validation
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
-  // Country options with their flags and country codes
-  const countryOptions = [
-    { code: '+1', country: 'US', flag: 'US' },
-    { code: '+34', country: 'ES', flag: 'ES' },
-    { code: '+49', country: 'DE', flag: 'DE' },
-    { code: '+33', country: 'FR', flag: 'FR' },
-    // Add more countries as needed
-  ];
 
   // Function to format phone number while typing
   const formatPhoneNumber = (value) => {
@@ -41,26 +56,7 @@ const SignUpDialog = ({ size = 'small' }) => {
 
     return cleaned;
   };
-
-  // Handle phone number input change
-  const handlePhoneChange = (event) => {
-    const formattedPhone = formatPhoneNumber(event.target.value);
-    setPhone(formattedPhone);
-
-    // Validate phone number format (only digits allowed)
-    const phoneRegex = /^\d{3}(\s?\d{3}){2}(\s?\d{4})?$/;
-    if (!phoneRegex.test(formattedPhone)) {
-      setPhoneError('Please enter a valid phone number.');
-    } else {
-      setPhoneError(null);
-    }
-  };
-
-  // Handle country code selection
-  const handleCountryCodeChange = (event) => {
-    setCountryCode(event.target.value);
-  };
-
+  
   // Handle other field changes
   const handleEmailChange = (event) => {
     setEmail(event.target.value);
@@ -73,51 +69,52 @@ const SignUpDialog = ({ size = 'small' }) => {
 
   const handleFirstNameChange = (event) => setFirstName(event.target.value);
   const handleLastNameChange = (event) => setLastName(event.target.value);
+  const handlePhoneNumberChange = ({ digits, isValid }) => {
+    if (isValid) setPhone(digits);
+  };
 
-  // Simulate sign-up process
+  
+  // Sign-up process
   const handleSignUp = async () => {
     if (!email || !firstName || !lastName || !countryCode || !phone) {
-      setGeneralError('All fields are required.');
-      setMessage('Please fill all the fields to sign up.');
+      setInfo('All fields are required.');
+      setSeverity('error');
       return;
     }
 
     if (!emailRegex.test(email)) {
       setEmailError('Invalid email format');
-      setMessage('Please enter a valid email.');
+      setInfo('Please enter a valid email.');
+      setSeverity('error');
       return;
     }
 
     if (!phone) {
       setPhoneError('Invalid phone number format');
-      setMessage('Please enter a valid phone number.');
+      setInfo('Please enter a valid phone number.');
+      setSeverity('error');
       return;
     }
 
     setLoading(true);
-    setGeneralError(null);
-    setMessage('Signing up...');
+    setInfo('Look your email for a signin link (try spam too)...');
+    setSeverity('warning');
 
-    // Simulating sign-up process (can replace with actual API call)
-    setTimeout(() => {
-      const success = Math.random() > 0.5; // Random success/failure for demonstration
-
-      if (success) {
-        setMessage('Sign-up successful!');
-        setLoading(false);
-        setEmail('');
-        setFirstName('');
-        setLastName('');
-        setCountryCode('+34');
-        setPhone('');
-      } else {
-        setGeneralError('Sign-up failed. Please try again.');
-        setMessage('Please check your details and try again.');
-        setLoading(false);
-      }
-    }, 2000);
+    try {
+      const result = await signUpUser({
+        "email": email,
+        "firstName": firstName,
+        "lastName": lastName,
+        "countryCode": countryCode,
+        "phone": phone
+      });
+    } catch (error) {
+      setInfo('Sign-up failed. Please try again.');
+      setSeverity('error');
+      setLoading(false);
+    }
   };
-
+  
   return (
     <div>
       {/* Sign Up Button */}
@@ -130,13 +127,11 @@ const SignUpDialog = ({ size = 'small' }) => {
         <DialogTitle>Sign Up</DialogTitle>
         <DialogContent>
           {/* General Message Text */}
-          <Typography variant="body1" color="textSecondary" gutterBottom>
-            {message}
-          </Typography>
-          
+          {info && <Alert severity={severity} role="status">{info}</Alert>}
+
           {/* Email row */}
           <Grid container spacing={1}>
-            <Grid item xs={12} sm={12} md={12}>
+            <Grid>
               <TextField
                 autoFocus
                 margin="dense"
@@ -158,7 +153,7 @@ const SignUpDialog = ({ size = 'small' }) => {
 
           {/* First Name and Last Name inputs on the second line */}
           <Grid container spacing={1} alignItems="center">
-            <Grid item xs={12} sm={6}>
+            <Grid>
               <TextField
                 margin="dense"
                 label="First Name"
@@ -168,12 +163,12 @@ const SignUpDialog = ({ size = 'small' }) => {
                 value={firstName}
                 onChange={handleFirstNameChange}
                 disabled={loading}
-                error={!!generalError}
-                helperText={generalError && 'First name is required'}
+                error={!!firstNameError}
+                helperText={firstNameError && 'First name is required'}
                 size={size}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid>
               <TextField
                 margin="dense"
                 label="Last Name"
@@ -183,8 +178,8 @@ const SignUpDialog = ({ size = 'small' }) => {
                 value={lastName}
                 onChange={handleLastNameChange}
                 disabled={loading}
-                error={!!generalError}
-                helperText={generalError && 'Last name is required'}
+                error={!!lastNameError}
+                helperText={lastNameError && 'Last name is required'}
                 size={size}
               />
             </Grid>
@@ -192,11 +187,13 @@ const SignUpDialog = ({ size = 'small' }) => {
 
           <Divider style={{ marginBottom: '16px' }} />
 
-          <PhoneNumberInput />
+          <PhoneNumberInput
+            disabled={loading}
+            onChange={handlePhoneNumberChange}
+          />
 
         </DialogContent>
 
-        {/* Dialog Actions */}
         <DialogActions>
           <Button onClick={() => setOpen(false)} color="secondary" disabled={loading}>
             Cancel
@@ -204,7 +201,7 @@ const SignUpDialog = ({ size = 'small' }) => {
           <Button
             onClick={handleSignUp}
             color="primary"
-            disabled={loading || !email || !firstName || !lastName || !countryCode || !phone || emailError || phoneError}
+            disabled={loading || !email || !firstName || !lastName }
           >
             {loading ? <CircularProgress size={24} /> : 'Sign Up'}
           </Button>
