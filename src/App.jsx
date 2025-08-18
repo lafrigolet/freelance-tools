@@ -1,20 +1,13 @@
 import React from 'react';
 import './App.css';
-import { LoginDialog, LoginButton } from './features/auth/LoginDialog';
-import SignUpDialog from './features/auth/SignUpDialog';
-import { AuthProvider } from "./features/auth/AuthContext";
 
 function App() {
   return (
-    <AuthProvider>
       <div className="App">
         <header className="App-header">
-          <h1>Login Form</h1>
-          <LoginButton />
-          <SignUpDialog />
+          <h1>Firebase Management</h1>
         </header>
       </div>
-    </AuthProvider>
   );
 }
 
