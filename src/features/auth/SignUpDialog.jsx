@@ -19,8 +19,8 @@ import {
 } from '@mui/material';
 import Flag from 'react-world-flags';
 import PhoneNumberInput from './PhoneNumberInput';
-import { signUpUser } from "./firebase-emulators";
-import { useAuthContext } from "./contexts/AuthContext";
+import { signUpUser } from "./users";
+import { useAuthContext } from "./AuthContext";
 
 const SignUpDialog = ({ size = 'small' }) => {
   // States to manage open/close dialog, form inputs, loading, and error messages
@@ -96,11 +96,11 @@ const SignUpDialog = ({ size = 'small' }) => {
       return;
     }
 
-    setLoading(true);
-    setInfo('Look your email for a signin link (try spam too)...');
-    setSeverity('warning');
-
     try {
+      setLoading(true);
+      setInfo("If the user doesn't 'exist, search your email for a login link (try spam too)...");
+      setSeverity('warning');
+
       const result = await signUpUser({
         "email": email,
         "firstName": firstName,
@@ -108,9 +108,20 @@ const SignUpDialog = ({ size = 'small' }) => {
         "countryCode": countryCode,
         "phone": phone
       });
+
+      setInfo('User Signed Up.');
+      setSeverity('info');
+
+      setLoading(false);
+      // Wait 1 second before closing
+      setTimeout(() => {
+        setOpen(false);
+      }, 2000);
+
     } catch (error) {
       setInfo('Sign-up failed. Please try again.');
       setSeverity('error');
+    } finally {
       setLoading(false);
     }
   };

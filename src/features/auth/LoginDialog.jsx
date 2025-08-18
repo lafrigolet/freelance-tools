@@ -19,13 +19,14 @@ import {
   deleteDoc,
   getDoc,
 } from "firebase/firestore";
+
 import {
   signInWithCustomToken,
   sendSignInLinkToEmail
 } from "firebase/auth";
 
-import { auth, db } from './firebase-emulators';
-import { useAuthContext } from "./contexts/AuthContext";
+import { loginUser } from "./users";
+import { useAuthContext } from "./AuthContext";
 
 function LoginDialog({
   open,
@@ -37,6 +38,7 @@ function LoginDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [info, setInfo] = useState('Enter your email to receive a sign-in link.');
+  const [severity, setSeverity] = useState('info');
   const [sent, setSent] = useState(false);
 
   const { setUser } = useAuthContext();
@@ -46,14 +48,6 @@ function LoginDialog({
   const emailRegex = useMemo(
     () => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
     []
-  );
-
-  const actionCodeSettings = useMemo(
-    () => ({
-      url: continueUrl || `${window.location.origin}/finishSignIn`,
-      handleCodeInApp: true,
-    }),
-    [continueUrl]
   );
 
   const resetState = useCallback(() => {
@@ -92,97 +86,34 @@ function LoginDialog({
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !loading && email && !error) {
-      handleLogin();
-    }
-  };
-
-  const startPolling = (email) => {
-    const docRef = firestoreDoc(db, "magicLinks", email);
-
-    const unsubscribe = onSnapshot(docRef, async (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        if (data.token) {
-          try {
-            const result = await signInWithCustomToken(auth, data.token);
-            setUser(result.user);
-            window.localStorage.removeItem("emailForSignIn");
-            setInfo("Successfully signed in!");
-
-            // Delete the magic link doc from Firestore
-            await deleteDoc(docRef);
-
-            // Stop polling
-            if (unsubscribeRef.current) unsubscribeRef.current();
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-          } catch (err) {
-            console.error("Error signing in with custom token:", err);
-            setError("Sign-in failed.");
-          }
-        }
-      }
-    });
-
-    // Set 5-minute timeout
-    timeoutRef.current = setTimeout(() => {
-      setError("Sign-in timed out. Please try again.");
-      if (unsubscribe) unsubscribe();
-    }, 5 * 60 * 1000);
-
-    unsubscribeRef.current = unsubscribe;
-    return unsubscribe;
-  };
-
-  const sendLoginLink = async () => {
-    try {
-      const userDoc = await getDoc(firestoreDoc(db, "users", email));
-      if (userDoc.exists()) {
-        await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-        window.localStorage.setItem("emailForSignIn", email);
-        setInfo("Sign-in link sent! Check your email.");
-        setSent(true);
-        if (unsubscribeRef.current) unsubscribeRef.current();
-        unsubscribeRef.current = startPolling(email);
-      } else {
-        setError('User does not exist. Please sign up first.');
-      }
-    } catch (err) {
-      console.error('sendSignInLinkToEmail error', err);
-      let msg = 'Failed to send the sign-in link. Please try again.';
-      switch (err?.code) {
-        case 'auth/invalid-email':
-          msg = 'That email address looks invalid.';
-          break;
-        case 'auth/missing-android-pkg-name':
-        case 'auth/missing-continue-uri':
-        case 'auth/invalid-continue-uri':
-        case 'auth/unauthorized-continue-uri':
-          msg = 'Sign-in link is misconfigured. Contact support.';
-          break;
-        case 'auth/too-many-requests':
-          msg = 'Too many attempts. Please wait a moment and try again.';
-          break;
-        default:
-          break;
-      }
-      setError(msg);
-    }
-  };
-
   const handleLogin = async () => {
     if (!email || !emailRegex.test(email)) {
-      setError('Invalid email format.');
-      setInfo('Please enter a valid email to get the sign-in link.');
+      setInfo('Invalid email format.');
+      setSeverity('error');
       return;
     }
-
+    
     try {
       setLoading(true);
       setError(null);
-      setInfo('Sending sign-in link…');
-      await sendLoginLink(); // important: await the async call
+      setInfo('If the user exist, search your email for a login link (try spam too)...');
+      setSeverity('warning');
+      
+      const result = await loginUser({ email });
+
+      setInfo('User Logged In.');
+      setSeverity('info');
+
+      setLoading(false);
+      // Wait 1 second before closing
+      setTimeout(() => {
+        onClose?.();
+      }, 2000);
+      
+    } catch (error) {
+      console.log('Login failed. Please try again.', error.message);
+      setInfo('Login failed. Please try again.');
+      setSeverity('error');
     } finally {
       setLoading(false);
     }
@@ -198,8 +129,8 @@ function LoginDialog({
       <DialogTitle>Login</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
-          {error && <Alert severity="error" role="alert">{error}</Alert>}
-          {info && <Typography variant="body2" color="text.secondary">{info}</Typography>}
+          {/* General Message Text */}
+          {info && <Alert severity={severity} role="status">{info}</Alert>}
 
           <TextField
             autoFocus
@@ -210,7 +141,6 @@ function LoginDialog({
             variant="outlined"
             value={email}
             onChange={handleEmailChange}
-            onKeyDown={handleKeyDown}
             disabled={loading || sent}
             error={!!error}
             helperText={error ? '' : 'We will email you a secure, single-use link.'}

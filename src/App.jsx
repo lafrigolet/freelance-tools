@@ -1,8 +1,8 @@
 import React from 'react';
 import './App.css';
-import { LoginDialog, LoginButton } from './LoginDialog';
-import SignUpDialog from './SignUpDialog';
-import { AuthProvider } from "./contexts/AuthContext";
+import { LoginDialog, LoginButton } from './features/auth/LoginDialog';
+import SignUpDialog from './features/auth/SignUpDialog';
+import { AuthProvider } from "./features/auth/AuthContext";
 
 function App() {
   return (

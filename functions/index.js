@@ -10,7 +10,6 @@ import { randomUUID } from "crypto";
 initializeApp();
 
 const sendMagicLinkEmail = onCall(async (req) => {
-  console.log("------sendMagicLinkEmail----------");
   const db = getFirestore();
   const { to, appName, recipientName, expirationMinutes, supportEmail } = req.data;
 
@@ -95,13 +94,11 @@ ${supportEmail}
 });
 
 const magicLinkHandler = onRequest(async (req, res) => {
-  console.log('----------magicLinkHandler----------');
   const auth = getAuth();
   const db = getFirestore();
 
   const tokenParam = req.query.token;
   if (!tokenParam) return res.status(400).send("Missing token");
-
   const snap = await db.collection("pendingMagicLinks").doc(tokenParam).get();
   if (!snap.exists) return res.status(400).send("Invalid or expired link");
 
@@ -110,7 +107,6 @@ const magicLinkHandler = onRequest(async (req, res) => {
     await snap.ref.delete();
     return res.status(400).send("Link expired");
   }
-
   await db.collection("pendingMagicLinks").doc(tokenParam).delete();
 
   let user;
@@ -128,7 +124,6 @@ const magicLinkHandler = onRequest(async (req, res) => {
   // Create a Firebase custom token
   const token = await auth.createCustomToken(user.uid);
   await db.collection("magicLinks").doc(email).set({ token, createdAt: Date.now() });
-  console.log("  // Create a Firebase custom token");
 
   res.status(200).send("You may now return to the app");
 });
