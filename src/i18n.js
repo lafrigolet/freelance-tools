@@ -9,11 +9,10 @@ i18n
   .use(HttpBackend)
   .init({
     lng: 'en',
-    debug: true,
+    debug: false,
     backend: {
       loadPath: '/locales/{{lng}}.yaml',
       parse: (data) => {
-        console.log('+++++++++++++++++', data);
         return yaml.load(data);
       },
     },
