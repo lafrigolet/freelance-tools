@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 *~
 
+# Firebase
+.firebaserc
+firebase.json
