@@ -2,17 +2,22 @@ import React from 'react';
 import logo from './logo.svg';
 import './App.css';
 import InstallPrompt from './InstallPrompt';
-import { MobileCameraCaptureWithOverlay } from './MobileCameraCapture';
-import InvoiceForm from './InvoiceForm';
-import PackageSubscriptionForm from './PackageSubscriptionForm';
-import CheckoutButton from './CheckoutButton';
+import LanguageSelector from "./LanguageSelector";
+import "./i18n"; // import i18n setup
+import { useTranslation } from "react-i18next";
+import { Container, Typography } from "@mui/material";
 
 function App() {
+  const { t } = useTranslation();
+
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Checkout Form</h1>
-        <CheckoutButton totalAmount="100" availableMethods="['tarjeta', 'google-pay', 'bizum', 'amazon-pay', 'apple-pay']"/>
+        <h1>i18n Internationalization</h1>
+        <LanguageSelector />
+        <Typography variant="h4" sx={{ mt: 3 }}>
+          {t("greeting")}
+        </Typography>
       </header>
       <InstallPrompt />
     </div>

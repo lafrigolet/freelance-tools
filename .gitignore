@@ -24,3 +24,9 @@ yarn-error.log*
 
 # emacs temp files
 *~
+
+# Firebase
+.firebaserc
+firebase-debug.log
+firestore-debug.log
+
