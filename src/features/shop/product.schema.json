@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Product",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "Product ID",
+      "description": "Unique product ID (e.g. Firestore doc ID or UUID)"
+    },
+    "sku": {
+      "type": "string",
+      "title": "SKU",
+      "description": "Stock keeping unit (internal identifier)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "title": "Name",
+      "description": "Product name"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "description": "Detailed description of the product"
+    },
+    "price": {
+      "type": "number",
+      "minimum": 0,
+      "title": "Price",
+      "description": "Base price"
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^[A-Z]{3}$",
+      "title": "Currency (e.g. USD, EUR)",
+      "description": "Currency code (ISO 4217, e.g. USD, EUR)"
+    },
+    "salePrice": {
+      "type": "number",
+      "minimum": 0,
+      "title": "Sale Price",
+      "description": "Discounted price, if applicable"
+    },
+    "inStock": {
+      "type": "boolean",
+      "default": true,
+      "title": "In Stock?",
+      "description": "Whether the product is available"
+    },
+    "stockQuantity": {
+      "type": "integer",
+      "minimum": 0,
+      "title": "Stock Quantity",
+      "description": "Number of units in stock"
+    },
+    "weight": {
+      "type": "number",
+      "minimum": 0,
+      "title": "Weight (kg)",
+      "description": "Weight in kilograms"
+    },
+    "dimensions": {
+      "type": "object",
+      "title": "Dimensions",
+      "properties": {
+        "width": { "type": "number", "minimum": 0, "title": "Width" },
+        "height": { "type": "number", "minimum": 0, "title": "Height" },
+        "depth": { "type": "number", "minimum": 0, "title": "Depth" },
+        "unit": {
+          "type": "string",
+          "enum": ["cm", "in", "mm"],
+          "title": "Unit"
+        }
+      },
+      "required": ["width", "height", "depth", "unit"],
+      "description": "Physical dimensions"
+    },
+    "category": {
+      "type": "string",
+      "title": "Category",
+      "description": "Category path (e.g., Electronics/Audio)"
+    },
+    "tags": {
+      "type": "array",
+      "title": "Tags",
+      "items": { "type": "string" },
+      "description": "Keywords for search/filter"
+    },
+    "brand": {
+      "type": "string",
+      "title": "Brand",
+      "description": "Brand or manufacturer"
+    },
+    "images": {
+      "type": "array",
+      "title": "Images",
+      "items": { "type": "string", "format": "uri" },
+      "description": "Product image URLs"
+    },
+    "rating": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 5,
+      "title": "Rating",
+      "description": "Average customer rating"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Created At",
+      "description": "Creation timestamp"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Updated At",
+      "description": "Last update timestamp"
+    }
+  },
+  "required": ["id", "name", "price", "currency", "inStock"],
+  "additionalProperties": false
+}

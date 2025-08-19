@@ -1,0 +1,28 @@
+{
+  "id": "p12345",
+  "sku": "SKU-001",
+  "name": "Wireless Headphones",
+  "description": "Noise-cancelling over-ear headphones with Bluetooth 5.0",
+  "price": 149.99,
+  "currency": "USD",
+  "salePrice": 129.99,
+  "inStock": true,
+  "stockQuantity": 35,
+  "weight": 0.5,
+  "dimensions": {
+    "width": 15,
+    "height": 20,
+    "depth": 8,
+    "unit": "cm"
+  },
+  "category": "Electronics/Audio",
+  "tags": ["wireless", "headphones", "bluetooth"],
+  "brand": "Acme Audio",
+  "images": [
+    "https://example.com/img/headphones-front.jpg",
+    "https://example.com/img/headphones-side.jpg"
+  ],
+  "rating": 4.6,
+  "createdAt": "2025-08-19T12:00:00Z",
+  "updatedAt": "2025-08-19T12:00:00Z"
+}

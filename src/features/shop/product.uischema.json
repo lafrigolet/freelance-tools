@@ -1,0 +1,19 @@
+{
+  "description": {
+    "ui:widget": "textarea",
+    "ui:options": { "rows": 4 }
+  },
+  "tags": {
+    "ui:options": {
+      "orderable": true
+    }
+  },
+  "images": {
+    "ui:options": {
+      "addable": true
+    }
+  },
+  "inStock": {
+    "ui:widget": "radio"
+  }
+}
