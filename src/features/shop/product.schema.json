@@ -1,5 +1,4 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Product",
   "type": "object",
   "properties": {
@@ -94,9 +93,11 @@
     },
     "images": {
       "type": "array",
-      "title": "Images",
-      "items": { "type": "string", "format": "uri" },
-      "description": "Product image URLs"
+      "title": "Product Images",
+      "items": {
+        "type": "object"
+      },
+      "minItems": 1
     },
     "rating": {
       "type": "number",
