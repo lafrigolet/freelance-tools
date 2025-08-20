@@ -26,6 +26,7 @@ export default function FacturaForm() {
     cuotaIVA: "",
     importeTotal: "",
     formaPago: "",
+    iban: "",   
   });
 
   // utils/nif.js
@@ -237,13 +238,37 @@ export default function FacturaForm() {
           {/* Forma de Pago */}
           <Grid size={12}>
             <TextField
+              select
               label="Forma de pago"
               name="formaPago"
               fullWidth
+              required
               value={formData.formaPago}
               onChange={handleChange}
-            />
+            >
+              <MenuItem value="transferencia">Transferencia bancaria</MenuItem>
+              <MenuItem value="domiciliacion">Domiciliación bancaria</MenuItem>
+              <MenuItem value="tarjeta">Tarjeta</MenuItem>
+              <MenuItem value="efectivo">Efectivo</MenuItem>
+              <MenuItem value="cheque">Cheque / pagaré</MenuItem>
+              <MenuItem value="otros">Otros (Bizum, PayPal…)</MenuItem>
+            </TextField>
           </Grid>
+
+          {/* IBAN condicional */}
+          {formData.formaPago === "transferencia" && (
+            <Grid size={12}>
+              <TextField
+                label="Número de cuenta IBAN"
+                name="iban"
+                fullWidth
+                required
+                value={formData.iban}
+                onChange={handleChange}
+                placeholder="ES00 0000 0000 0000 0000 0000"
+              />
+            </Grid>
+          )}
 
           {/* Leyenda VeriFactu */}
           <Grid size={12}>
