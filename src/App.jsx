@@ -3,6 +3,7 @@ import './App.css';
 import { LoginDialog, LoginButton } from './features/auth/LoginDialog';
 import SignUpDialog from './features/auth/SignUpDialog';
 import { AuthProvider } from "./features/auth/AuthContext";
+import InvoiceForm from "./features/invoices/invoice.form";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
           <h1>Login Form</h1>
           <LoginButton />
           <SignUpDialog />
+          <InvoiceForm />
         </header>
       </div>
     </AuthProvider>

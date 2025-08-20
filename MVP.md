@@ -6,16 +6,16 @@ Tasks are organized by module and can be tracked using GitHub’s markdown check
 ---
 
 ## ✅ 1. Project Setup
-- [ ] Create GitHub repository and initialize project structure
-- [ ] Initialize Vite + React + TypeScript project
-- [ ] Install and configure Material UI (theme, typography, styles)
-- [ ] Connect project to Firebase (Auth, Firestore, Functions, Storage)
-- [ ] Define folder structure (`components/`, `pages/`, `services/`, `utils/`, `hooks/`)
+- [x] Create GitHub repository and initialize project structure
+- [x] Initialize Vite + React + TypeScript project
+- [x] Install and configure Material UI (theme, typography, styles)
+- [x] Connect project to Firebase (Auth, Firestore, Functions, Storage)
+- [x] Define folder structure (`components/`, `pages/`, `services/`, `utils/`, `hooks/`)
 
 ---
 
 ## ✅ 2. User Management & Security
-- [ ] Implement Firebase Authentication (email/password, OAuth optional)
+- [x] Implement Firebase Authentication (email/password, OAuth optional)
 - [ ] Define user roles (admin, issuer, client)
 - [ ] Create route protection middleware for role-based access
 
