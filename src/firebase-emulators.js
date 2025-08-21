@@ -6,6 +6,8 @@ import { initializeApp } from "firebase/app";
 import {
   getAuth,
   connectAuthEmulator,
+  setPersistence,
+  browserLocalPersistence,
 } from "firebase/auth";
 import {
   getFirestore,
@@ -41,6 +43,15 @@ const app = initializeApp(firebaseConfig);
 // --- Auth ---
 const auth = getAuth(app);
 connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+
+// set persistence once at startup
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log("Auth persistence set to local");
+  })
+  .catch((error) => {
+    console.error("Error setting persistence:", error);
+  });
 
 // --- Firestore ---
 const db = getFirestore(app);
