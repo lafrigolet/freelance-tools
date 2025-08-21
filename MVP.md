@@ -22,9 +22,9 @@ Tasks are organized by module and can be tracked using GitHub’s markdown check
 ---
 
 ## ✅ 3. Invoice Issuance
-- [ ] Create invoice form (issuer, client, items, taxes)
-- [ ] Add validation for fiscal data (NIF, VAT, dates)
-- [ ] Save invoice to Firestore with status `emitida`
+- [x] Create invoice form (issuer, client, items, taxes)
+- [x] Add validation for fiscal data (NIF, VAT, dates)
+- [x] Save invoice to Firestore with status `emitida`
 
 ---
 

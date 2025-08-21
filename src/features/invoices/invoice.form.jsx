@@ -9,8 +9,12 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { Add, Delete } from "@mui/icons-material";
+import { useAuthContext } from "../auth/AuthContext";
+import { db, auth } from "../../firebase";
+import { doc, setDoc } from "firebase/firestore";
 
 export default function FacturaForm() {
+  const { user, setUser } = useAuthContext();
   const today = new Date().toISOString().split("T")[0];
   const [formData, setFormData] = useState({
     numeroFactura: "",
@@ -77,36 +81,58 @@ export default function FacturaForm() {
     0
   );
 
-const handleChangeIBAN = (e) => {
-  const { name, value } = e.target;
-  let newFormData = { ...formData, [name]: value };
+  const handleChangeIBAN = (e) => {
+    const { name, value } = e.target;
+    let newFormData = { ...formData, [name]: value };
+    
+    // --- IBAN strict validation (ES + 22 digits) ---
+    if (name === "iban") {
+      let raw = value.replace(/\s+/g, "").toUpperCase();
+      
+      // First two characters: only letters
+      let prefix = raw.slice(0, 2).replace(/[^A-Z]/g, "");
+      
+      // Remaining characters: only digits, max 22
+      let numbers = raw.slice(2).replace(/\D/g, "").slice(0, 22);
+      
+      // Combine back
+      raw = prefix + numbers;
+      
+      // Insert space every 4 chars for readability
+      const formatted = raw.replace(/(.{4})/g, "$1 ").trim();
+      
+      newFormData.iban = formatted;
+    }
+    
+    setFormData(newFormData);
+  };
 
-  // --- IBAN strict validation (ES + 22 digits) ---
-  if (name === "iban") {
-    let raw = value.replace(/\s+/g, "").toUpperCase();
-
-    // First two characters: only letters
-    let prefix = raw.slice(0, 2).replace(/[^A-Z]/g, "");
-
-    // Remaining characters: only digits, max 22
-    let numbers = raw.slice(2).replace(/\D/g, "").slice(0, 22);
-
-    // Combine back
-    raw = prefix + numbers;
-
-    // Insert space every 4 chars for readability
-    const formatted = raw.replace(/(.{4})/g, "$1 ").trim();
-
-    newFormData.iban = formatted;
-  }
-
-  setFormData(newFormData);
-};
-
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Factura enviada:", { ...formData, totales, totalFactura });
+
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Debes iniciar sesión para guardar facturas.");
+      return;
+    }
+
+    try {
+      // Use numeroFactura as invoiceId (or generate UUID)
+      const invoiceId = formData.numeroFactura || Date.now().toString();
+
+      await setDoc(doc(db, "invoices", user.uid, "userInvoices", invoiceId), {
+        ...formData,
+        createdAt: new Date().toISOString(),
+        userId: user.uid,
+        userEmail: user.email,
+      });
+
+      alert("Factura guardada con éxito 🚀");
+      setFormData({ ...formData, numeroFactura: "", descripcion: "" }); // clear some fields
+    } catch (error) {
+      console.error("Error guardando la factura:", error);
+      alert("Error al guardar la factura.");
+    }
   };
 
   return (
