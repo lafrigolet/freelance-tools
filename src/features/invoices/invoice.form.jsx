@@ -77,6 +77,33 @@ export default function FacturaForm() {
     0
   );
 
+const handleChangeIBAN = (e) => {
+  const { name, value } = e.target;
+  let newFormData = { ...formData, [name]: value };
+
+  // --- IBAN strict validation (ES + 22 digits) ---
+  if (name === "iban") {
+    let raw = value.replace(/\s+/g, "").toUpperCase();
+
+    // First two characters: only letters
+    let prefix = raw.slice(0, 2).replace(/[^A-Z]/g, "");
+
+    // Remaining characters: only digits, max 22
+    let numbers = raw.slice(2).replace(/\D/g, "").slice(0, 22);
+
+    // Combine back
+    raw = prefix + numbers;
+
+    // Insert space every 4 chars for readability
+    const formatted = raw.replace(/(.{4})/g, "$1 ").trim();
+
+    newFormData.iban = formatted;
+  }
+
+  setFormData(newFormData);
+};
+
+
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Factura enviada:", { ...formData, totales, totalFactura });
@@ -211,7 +238,7 @@ export default function FacturaForm() {
             <Typography variant="h6">Conceptos</Typography>
           </Grid>
           {formData.lineas.map((linea, index) => (
-            <Grid container spacing={2} item xs={12} key={index} alignItems="center">
+            <Grid container spacing={2} size={12} key={index} alignItems="center">
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   label="Descripción"
@@ -269,82 +296,82 @@ export default function FacturaForm() {
                 <IconButton onClick={() => removeLinea(index)} color="error">
                   <Delete />
                 </IconButton>
-              </Grid>
+            </Grid>
             </Grid>
           ))}
-          <Grid size={{ xs: 12}}>
-            <Button startIcon={<Add />} onClick={addLinea}>
-              Añadir concepto
-            </Button>
-          </Grid>
+        <Grid size={{ xs: 12}}>
+          <Button startIcon={<Add />} onClick={addLinea}>
+            Añadir concepto
+          </Button>
+        </Grid>
 
-          {/* Totales */}
-          <Grid size={{ xs: 12 }}>
-            <Typography variant="h6">Totales</Typography>
-            {Object.entries(totales).map(([iva, t]) => (
-              <Typography key={iva}>
-                IVA {iva}% → Base: {t.base.toFixed(2)} €, Cuota:{" "}
-                {t.cuota.toFixed(2)} €
-              </Typography>
-            ))}
-            <Typography variant="h6">
-              Total Factura: {totalFactura.toFixed(2)} €
+        {/* Totales */}
+        <Grid size={{ xs: 12 }}>
+          <Typography variant="h6">Totales</Typography>
+          {Object.entries(totales).map(([iva, t]) => (
+            <Typography key={iva}>
+              IVA {iva}% → Base: {t.base.toFixed(2)} €, Cuota:{" "}
+              {t.cuota.toFixed(2)} €
             </Typography>
-          </Grid>
+          ))}
+          <Typography variant="h6">
+            Total Factura: {totalFactura.toFixed(2)} €
+          </Typography>
+        </Grid>
 
-          {/* Forma de Pago */}
-          <Grid size={3}>
+        {/* Forma de Pago */}
+        <Grid size={3}>
+          <TextField
+            select
+            label="Forma de pago"
+            name="formaPago"
+            fullWidth
+            required
+            value={formData.formaPago}
+            onChange={handleChange}
+          >
+            <MenuItem value="transferencia">Transferencia bancaria</MenuItem>
+            <MenuItem value="domiciliacion">Domiciliación bancaria</MenuItem>
+            <MenuItem value="tarjeta">Tarjeta</MenuItem>
+            <MenuItem value="efectivo">Efectivo</MenuItem>
+            <MenuItem value="cheque">Cheque / pagaré</MenuItem>
+            <MenuItem value="otros">Otros (Bizum, PayPal…)</MenuItem>
+          </TextField>
+        </Grid>
+
+        {/* IBAN condicional */}
+        {formData.formaPago === "transferencia" && (
+          <Grid size={4}>
             <TextField
-              select
-              label="Forma de pago"
-              name="formaPago"
+              label="Número de cuenta IBAN"
+              name="iban"
               fullWidth
               required
-              value={formData.formaPago}
-              onChange={handleChange}
-            >
-              <MenuItem value="transferencia">Transferencia bancaria</MenuItem>
-              <MenuItem value="domiciliacion">Domiciliación bancaria</MenuItem>
-              <MenuItem value="tarjeta">Tarjeta</MenuItem>
-              <MenuItem value="efectivo">Efectivo</MenuItem>
-              <MenuItem value="cheque">Cheque / pagaré</MenuItem>
-              <MenuItem value="otros">Otros (Bizum, PayPal…)</MenuItem>
-            </TextField>
+              value={formData.iban}
+              onChange={handleChangeIBAN}
+              placeholder="ES00 0000 0000 0000 0000 0000"
+            />
           </Grid>
+        )}
 
-          {/* IBAN condicional */}
-          {formData.formaPago === "transferencia" && (
-            <Grid size={4}>
-              <TextField
-                label="Número de cuenta IBAN"
-                name="iban"
-                fullWidth
-                required
-                value={formData.iban}
-                onChange={handleChange}
-                placeholder="ES00 0000 0000 0000 0000 0000"
-              />
-            </Grid>
-          )}
-
-          {/* Leyenda VeriFactu */}
-          <Grid size={12}>
-            <Typography
-              variant="body2"
-              sx={{ mt: 2, fontStyle: "italic", color: "gray" }}
-            >
-              “Factura verificable en la sede electrónica de la AEAT (Veri*Factu)”
-            </Typography>
-          </Grid>
-
-          {/* Botón Submit */}
-          <Grid size={12}>
-            <Button type="submit" variant="contained" color="primary">
-              Guardar Factura
-            </Button>
-          </Grid>
+        {/* Leyenda VeriFactu */}
+        <Grid size={12}>
+          <Typography
+            variant="body2"
+            sx={{ mt: 2, fontStyle: "italic", color: "gray" }}
+          >
+            “Factura verificable en la sede electrónica de la AEAT (Veri*Factu)”
+          </Typography>
         </Grid>
-      </form>
+
+        {/* Botón Submit */}
+        <Grid size={12}>
+          <Button type="submit" variant="contained" color="primary">
+            Guardar Factura
+          </Button>
+        </Grid>
+      </Grid>
+    </form>
     </Paper>
   );
 }
