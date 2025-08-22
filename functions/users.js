@@ -2,6 +2,9 @@ import { onCall, onRequest } from "firebase-functions/v2/https";
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
+import smtpConfig from "./nodemailer-conf.js";
+import nodemailer from "nodemailer";
+import { randomUUID } from "crypto";
 
 export const listUsers = onCall({ region: "us-central1" }, async (request) => {
   const context = request;
