@@ -29,10 +29,11 @@ Tasks are organized by module and can be tracked using GitHub’s markdown check
 ---
 
 ## ✅ 4. RFE (Registro de Facturación Estándar)
-- [ ] Create Firebase Cloud Function to generate RFE
+- [x] Create Firebase Cloud Function to generate RFE
 - [ ] Calculate SHA-256 hash + chained hash from previous record
-- [ ] Save RFE in Firestore collection `registrosFacturacion`
-- [ ] Add timestamp and digital signature placeholder
+- [x] Save RFE in Firestore collection `rfes`
+- [x] Add timestamp
+- [ ] Add digital signature placeholder
 - [ ] Ensure immutability (append-only, no overwrite)
 
 ---
