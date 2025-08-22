@@ -1,5 +1,5 @@
 import { onCall, onRequest } from "firebase-functions/v2/https";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
 // Convert formData → RFE
 function convertToRFE(formData) {
@@ -47,10 +47,10 @@ function convertToRFE(formData) {
 }
 
 //  Function: receive formData, convert → save → send AEAT
-export const emitInvoice = onCall(async (data, context) => {
+export const emitInvoice = onCall({ region: "us-central1" }, async ({ auth, data }) => {
   const db = getFirestore();
   const { formData } = data;
-  const userId = context.auth?.uid;
+  const userId = auth?.uid;
 
   if (!userId) {
     return { success: false, error: "Usuario no autenticado" };
@@ -68,8 +68,8 @@ export const emitInvoice = onCall(async (data, context) => {
       .doc(invoiceId)
       .set({
         ...rfeData,
-        prevHash: "hash-previo...", // aquí enlazarías si llevas cadena
-        createdAt: db.FieldValue.serverTimestamp(),
+        prevHash: "hash-previo...", // 🔗 enlace al hash anterior si usas cadena
+        createdAt: FieldValue.serverTimestamp(),
       });
 
     // 2. Send to AEAT (placeholder call)

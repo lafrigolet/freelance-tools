@@ -1,5 +1,13 @@
+import {
+  app,
+  auth,
+  db,
+  rtdb,
+  storage,
+  functions,
+} from "../../firebase";
+
 import { httpsCallable } from "firebase/functions";
 
-const emitInvoice = httpsCallable(functions, "emitInvoice");
+export const emitInvoice = httpsCallable(functions, "emitInvoice");
 
-export { emitInvoice };

@@ -12,6 +12,7 @@ import { Add, Delete } from "@mui/icons-material";
 import { useAuthContext } from "../auth/AuthContext";
 import { db, auth } from "../../firebase";
 import { doc, setDoc } from "firebase/firestore";
+import { emitInvoice } from "./invoices";
 
 export default function FacturaForm() {
   const { user, setUser } = useAuthContext();
