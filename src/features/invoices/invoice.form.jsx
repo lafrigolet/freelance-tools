@@ -107,31 +107,48 @@ export default function FacturaForm() {
     setFormData(newFormData);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSaveInvoice = async () => {
     const user = auth.currentUser;
     if (!user) {
-      alert("Debes iniciar sesión para guardar facturas.");
+      alert("Debes iniciar sesión.");
       return;
     }
-
+    
     try {
-      // Use numeroFactura as invoiceId (or generate UUID)
       const invoiceId = formData.numeroFactura || Date.now().toString();
+      await setDoc(
+        doc(db, "invoices", user.uid, "userInvoices", invoiceId), {
+          ...formData,
+          createdAt: new Date().toISOString(),
+          userId: user.uid,
+          userEmail: user.email,
+        });
 
-      await setDoc(doc(db, "invoices", user.uid, "userInvoices", invoiceId), {
-        ...formData,
-        createdAt: new Date().toISOString(),
-        userId: user.uid,
-        userEmail: user.email,
-      });
-
-      alert("Factura guardada con éxito 🚀");
-      setFormData({ ...formData, numeroFactura: "", descripcion: "" }); // clear some fields
-    } catch (error) {
-      console.error("Error guardando la factura:", error);
-      alert("Error al guardar la factura.");
+      alert("Factura guardada en Firestore ✅");
+    } catch (err) {
+      console.error(err);
+      alert("Error guardando factura ❌");
+    }
+  };
+  
+  const handleEmitToAEAT = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Debes iniciar sesión.");
+      return;
+    }
+    
+    try {
+      const response = await emitInvoice({ formData });
+      
+      if (response.data.success) {
+        alert("Factura emitida correctamente 🚀");
+      } else {
+        alert("Error emitiendo factura ❌ " + response.data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error llamando a la función de AEAT");
     }
   };
 
@@ -140,7 +157,7 @@ export default function FacturaForm() {
       <Typography variant="h5" gutterBottom>
         Nueva Factura (Veri*Factu)
       </Typography>
-      <form onSubmit={handleSubmit}>
+      <form>
         <Grid container spacing={2}>
           {/* Número y fecha */}
           <Grid size={{ xs: 12, sm: 3 }}>
@@ -390,11 +407,25 @@ export default function FacturaForm() {
           </Typography>
         </Grid>
 
-        {/* Botón Submit */}
-        <Grid size={12}>
-          <Button type="submit" variant="contained" color="primary">
-            Guardar Factura
-          </Button>
+        {/* Botones */}
+        <Grid container spacing={2}>
+          <Grid size={12}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSaveInvoice}
+            >
+              Guardar en Firestore
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              sx={{ ml: 2 }}
+              onClick={handleEmitToAEAT}
+            >
+              Emitir a AEAT
+            </Button>
+          </Grid>
         </Grid>
       </Grid>
     </form>
