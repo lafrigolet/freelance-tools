@@ -13,6 +13,7 @@ import { useAuthContext } from "../auth/AuthContext";
 import { db, auth } from "../../firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { emitInvoice } from "./invoices";
+import InvoicePDFButton from "./invoice.pdf";
 
 export default function FacturaForm() {
   const { user, setUser } = useAuthContext();
@@ -426,6 +427,7 @@ export default function FacturaForm() {
             >
               Emitir a AEAT
             </Button>
+            <InvoicePDFButton formData={formData} />
           </Grid>
         </Grid>
       </Grid>

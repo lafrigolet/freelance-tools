@@ -4,6 +4,7 @@ import { LoginDialog, LoginButton } from './features/auth/LoginDialog';
 import SignUpDialog from './features/auth/SignUpDialog';
 import { AuthProvider } from "./features/auth/AuthContext";
 import InvoiceForm from "./features/invoices/invoice.form";
+import QRCode from "./features/invoices/qrcode";
 
 function App() {
   return (
@@ -14,6 +15,14 @@ function App() {
           <LoginButton />
           <SignUpDialog />
           <InvoiceForm />
+          <QRCode
+            nif="89890001K"
+            numserie="12345678-G33"
+            fecha="01-09-2024"
+            importe={241.40}
+            verificable={true}     // Cambia a false para "no verificable"
+          produccion={false}     // Cambia a true para entorno real AEAT
+          />
         </header>
       </div>
     </AuthProvider>
