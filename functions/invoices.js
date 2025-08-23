@@ -46,10 +46,57 @@ function convertToRFE(formData) {
   };
 }
 
-//  Function: receive formData, convert → save → send AEAT
-export const emitInvoice = onCall({ region: "us-central1" }, async ({ auth, data }) => {
+
+// helper hash
+function computeHash(data) {
+  return crypto.createHash("sha256").update(JSON.stringify(data)).digest("hex");
+}
+
+async function processUserQueue(userId) {
+  const queueRef = db.collection("emit").doc(userId).collection("queue");
+  const snapshot = await queueRef.orderBy("queuedAt").get();
+
+  if (snapshot.empty) return;
+
+  for (const doc of snapshot.docs) {
+    const rfe = doc.data();
+
+    try {
+      // Simulación de envío a AEAT
+      const res = await fakeSendToAEAT(rfe);
+
+      if (!res.ok) {
+        console.warn(`Fallo envío RFE ${doc.id} del usuario ${userId}`);
+        // dejamos de procesar más RFEs para este usuario
+        break;
+      }
+
+      // Envío correcto → marcamos como enviado y borramos de la cola
+      await doc.ref.delete();
+
+      // Opcional: actualizar en rfes/{userId} → status "sent"
+      await db
+        .collection("rfes")
+        .doc(userId)
+        .collection("userRfes")
+        .doc(doc.id)
+        .update({
+          status: "sent",
+          sentAt: new Date(),
+        });
+
+      console.log(`RFE ${doc.id} enviado correctamente para usuario ${userId}`);
+    } catch (err) {
+      console.error(`Error procesando RFE ${doc.id} de ${userId}:`, err);
+      // no continuar con más RFEs de este usuario
+      break;
+    }
+  }
+}
+
+export const emit = onCall({ region: "us-central1" }, async ({ auth, data }) => {
   const db = getFirestore();
-  const { formData } = data;
+  const { formData, tipo } = data; // tipo: "ALTA" | "ANULACION" | "EVENTO"
   const userId = auth?.uid;
 
   if (!userId) {
@@ -57,39 +104,59 @@ export const emitInvoice = onCall({ region: "us-central1" }, async ({ auth, data
   }
 
   try {
-    const rfeData = convertToRFE(formData);
-    const invoiceId = formData.numeroFactura || Date.now().toString();
+    const rfeData = convertToRFE(formData, tipo); // función adaptada según tipo
+    const rfeId = formData.numeroFactura || Date.now().toString();
 
-    // 1. Save into rfes
-    await db
-      .collection("rfes")
-      .doc(userId)
-      .collection("userRfes")
-      .doc(invoiceId)
-      .set({
+    const userRef = db.collection("users").doc(userId);
+    const rfesRef = db.collection("rfes").doc(userId).collection("userRfes").doc(rfeId);
+    const emitRef = db.collection("emit").doc(userId).collection("queue").doc(rfeId);
+
+    // Ejecutamos todo de forma transaccional
+    await db.runTransaction(async (tx) => {
+      const userSnap = await tx.get(userRef);
+      const lastHash = userSnap.get("rfes.lastHash") || null;
+
+      // Calcular hash actual encadenado
+      const currentHash = computeHash({
         ...rfeData,
-        prevHash: "hash-previo...", // 🔗 enlace al hash anterior si usas cadena
-        createdAt: FieldValue.serverTimestamp(),
+        prevHash: lastHash,
+        rfeId,
+        tipo,
+        timestamp: Date.now(),
       });
 
-    // 2. Send to AEAT (placeholder call)
-    const aeatResponse = await fakeSendToAEAT(rfeData);
+      const fullRfe = {
+        ...rfeData,
+        tipo,
+        prevHash: lastHash,
+        hash: currentHash,
+        createdAt: FieldValue.serverTimestamp(),
+      };
 
-    if (!aeatResponse.ok) {
-      // rollback
-      await db
-        .collection("rfes")
-        .doc(userId)
-        .collection("userRfes")
-        .doc(invoiceId)
-        .delete();
+      // 1. Guardar RFE encadenado en colección oficial
+      tx.set(rfesRef, fullRfe);
 
-      return { success: false, error: "Error en AEAT" };
-    }
+      // 2. Guardar en la cola de emisión (emit queue)
+      tx.set(emitRef, {
+        ...fullRfe,
+        status: "pending", // pendiente de enviar a AEAT
+        queuedAt: FieldValue.serverTimestamp(),
+      });
 
-    return { success: true, rfeId: invoiceId };
+      // 3. Actualizar el lastHash del usuario
+      tx.set(
+        userRef,
+        { rfes: { lastHash: currentHash } },
+        { merge: true }
+      );
+    });
+
+    // Avoid collision if the same user is sending several RFEs
+    await processUserQueue(userId);
+
+    return { success: true, rfeId };
   } catch (err) {
-    console.error("Error en emitInvoice:", err);
+    console.error("Error en emit:", err);
     return { success: false, error: err.message };
   }
 });

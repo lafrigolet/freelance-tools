@@ -121,6 +121,7 @@ const SignUpDialog = ({ size = 'small' }) => {
     } catch (error) {
       setInfo('Sign-up failed. Please try again.');
       setSeverity('error');
+      console.log('Sign-up failed. Please try again.', error.message);
     } finally {
       setLoading(false);
     }
