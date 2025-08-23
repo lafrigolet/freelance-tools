@@ -2,6 +2,7 @@ import {
   signOut,
   signInWithCustomToken,
   sendSignInLinkToEmail,
+  deleteUser as deleteUserAuth,
 } from "firebase/auth";
 
 import {
@@ -81,20 +82,56 @@ const signUpUser = async ({
   phone
 }) => {
   if (!(await userExist(email))) {
-    const result = await sendMagicLinkEmail({
-      to: email,
-      appName: "Bill App",
-      recipientName: firstName,
-      expirationMinutes: 5,
-      supportEmail: "billapp74@gmail.com",
-    });
-    
-    const token = await waitForUserLinkClick(email);
-    
-    // Save user info to Firestore
-    await setDoc(firestoreDoc(db, "users", email), { email, firstName, lastName, countryCode, phone });
+    let userCredential;
+    try {
+      const result = await sendMagicLinkEmail({
+        to: email,
+        appName: "Bill App",
+        recipientName: firstName,
+        expirationMinutes: 5,
+        supportEmail: "billapp74@gmail.com"
+      });
+
+      userCredential = await waitForUserLinkClick(email);
+      const { uid } = userCredential.user;
+
+      await setDoc(firestoreDoc(db, "users", uid), {
+        uid,
+        email,
+        firstName,
+        lastName,
+        countryCode,
+        phone,
+        createdAt: new Date()
+      });
+      
+      return userCredential;
+
+    } catch (error) {
+      console.error("Error during signUpUser:", error);
+
+      if (userCredential?.user) {
+        const { uid } = userCredential.user;
+
+        try {
+          await deleteUserAuth(userCredential.user);
+          console.log("Rolled back: user deleted from Firebase Auth");
+        } catch (authErr) {
+          console.warn("Failed to delete user from Auth:", authErr);
+        }
+
+        try {
+          await deleteDoc(firestoreDoc(db, "users", uid));
+          console.log("Rolled back: user document deleted from Firestore");
+        } catch (fsErr) {
+          console.warn("Failed to delete user document from Firestore:", fsErr);
+        }
+      }
+
+      throw error;
+    }
   }
-}
+};
 
 const loginUser = async ({ email }) => {
   if (await userExist(email)) {
