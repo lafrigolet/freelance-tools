@@ -78,7 +78,6 @@ const signUpUser = async ({
   email,
   firstName,
   lastName,
-  countryCode,
   phone
 }) => {
   if (!(await userExist(email))) {
@@ -100,7 +99,6 @@ const signUpUser = async ({
         email,
         firstName,
         lastName,
-        countryCode,
         phone,
         createdAt: new Date()
       });
