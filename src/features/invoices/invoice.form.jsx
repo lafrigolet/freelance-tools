@@ -20,12 +20,8 @@ export default function FacturaForm() {
   const [formData, setFormData] = useState({
     numeroFactura: "",
     fecha: today,
-    emisorNombre: "",
-    emisorNIF: "",
-    emisorDomicilio: "",
-    receptorNombre: "",
-    receptorNIF: "",
-    receptorDomicilio: "",
+    emisor: {nombre: "", NIF: "", domicilio: ""},
+    receptor: {nombre: "", NIF: "", domicilio: ""},
     formaPago: "",
     iban: "",
     lineas: [
@@ -41,9 +37,19 @@ export default function FacturaForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    
+    // detect nested fields with dot notation: "emisor.nombre"
+    if (name.includes(".")) {
+      const [parent, child] = name.split(".");
+      setFormData((prev) => ({
+        ...prev,
+        [parent]: { ...prev[parent], [child]: value },
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
-
+  
   // 🔹 Cambios en una línea
   const handleLineaChange = (index, field, value) => {
     const nuevas = [...formData.lineas];
@@ -118,7 +124,7 @@ export default function FacturaForm() {
     try {
       const invoiceId = formData.numeroFactura || Date.now().toString();
       await setDoc(
-        doc(db, "invoices", user.uid, "userInvoices", invoiceId), {
+        doc(db, "invoices", formData.emisor.NIF, "userInvoices", invoiceId), {
           ...formData,
           createdAt: new Date().toISOString(),
           userId: user.uid,
@@ -199,24 +205,24 @@ export default function FacturaForm() {
             <Grid size={{ xs: 12, sm: 5 }}>
               <TextField
                 label="Nombre / Razón Social"
-                name="emisorNombre"
+                name="emisor.nombre"
                 fullWidth
                 required
-                value={formData.emisorNombre}
+                value={formData.emisor.nombre}
                 onChange={handleChange}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 2 }}>
               <TextField
                 label="NIF"
-                name="emisorNIF"
+                name="emisor.NIF"
                 fullWidth
                 required
-                value={formData.emisorNIF}
+                value={formData.emisor.NIF}
                 onChange={handleChange}
-                error={formData.emisorNIF !== "" && !isValidNIF(formData.emisorNIF)}
+                error={formData.emisor.NIF !== "" && !isValidNIF(formData.emisor.NIF)}
                 helperText={
-                  formData.emisorNIF !== "" && !isValidNIF(formData.emisorNIF)
+                  formData.emisor.NIF !== "" && !isValidNIF(formData.emisor.NIF)
                     ? "Introduce un NIF válido"
                     : " "
                 }
@@ -225,10 +231,10 @@ export default function FacturaForm() {
             <Grid size={{ xs: 12, sm: 5 }}>
               <TextField
                 label="Domicilio"
-                name="emisorDomicilio"
+                name="emisor.domicilio"
                 fullWidth
                 required
-                value={formData.emisorDomicilio}
+                value={formData.emisor.domicilio}
                 onChange={handleChange}
               />
             </Grid>
@@ -242,24 +248,24 @@ export default function FacturaForm() {
             <Grid size={{ xs: 12, sm: 5 }}>
               <TextField
                 label="Nombre / Razón Social"
-                name="receptorNombre"
+                name="receptor.nombre"
                 fullWidth
                 required
-                value={formData.receptorNombre}
+                value={formData.receptor.nombre}
                 onChange={handleChange}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 2 }}>
               <TextField
                 label="NIF"
-                name="receptorNIF"
+                name="receptor.NIF"
                 fullWidth
                 required
-                value={formData.receptorNIF}
+                value={formData.receptor.NIF}
                 onChange={handleChange}
-                error={formData.receptorNIF !== "" && !isValidNIF(formData.receptorNIF)}
+                error={formData.receptor.NIF !== "" && !isValidNIF(formData.receptor.NIF)}
                 helperText={
-                  formData.receptorNIF !== "" && !isValidNIF(formData.receptorNIF)
+                  formData.receptor.NIF !== "" && !isValidNIF(formData.receptor.NIF)
                     ? "Introduce un NIF válido"
                     : " "
                 }
@@ -268,10 +274,10 @@ export default function FacturaForm() {
             <Grid size={{ xs: 12, sm: 5 }}>
               <TextField
                 label="Domicilio"
-                name="receptorDomicilio"
+                name="receptor.domicilio"
                 fullWidth
                 required
-                value={formData.receptorDomicilio}
+                value={formData.receptor.domicilio}
                 onChange={handleChange}
               />
             </Grid>
