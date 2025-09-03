@@ -80,3 +80,48 @@ Tasks are organized by module and can be tracked using GitHub’s markdown check
 - [ ] Implement Phase 2: real-time AEAT submission  
 - [ ] Add dashboards for invoice/reporting  
 - [ ] Extend to integrations (bank, accounting)  
+
+
+# Checklist de requisitos Verifactu para software de facturación
+
+## 1. Integridad e inalterabilidad
+- [ ] Cada factura debe generar un Registro de Facturación Electrónico (RFE).  
+- [ ] El RFE debe incluir un hash encadenado con el registro anterior.  
+- [ ] Si se emite una factura rectificativa, debe quedar vinculada a la original.  
+- [ ] El sistema no debe permitir la eliminación de facturas.  
+
+## 2. Autenticidad y trazabilidad
+- [ ] El RFE debe llevar fecha y hora exactas de generación.  
+- [ ] Cada registro debe firmarse digitalmente o incluir un código de autenticidad.  
+- [ ] El software debe demostrar que la factura se emitió en el momento registrado.  
+
+## 3. Contenido mínimo del RFE
+Debe incluir al menos:  
+- [ ] NIF emisor  
+- [ ] NIF destinatario (si aplica)  
+- [ ] Número de factura  
+- [ ] Fecha de expedición  
+- [ ] Base imponible, tipo de IVA, cuota de IVA  
+- [ ] Total factura  
+- [ ] Régimen aplicable (general, simplificado, RECC, intracomunitaria, etc.)  
+- [ ] Hash encadenado  
+
+## 4. Modo Verifactu (opcional, pero recomendable)
+- [ ] Implementar opción para enviar automáticamente los RFE a la AEAT.  
+- [ ] Usar los esquemas XML oficiales que publicará Hacienda.  
+- [ ] Si no se activa el envío, el software debe almacenar localmente todos los registros.  
+
+## 5. Conservación y acceso
+- [ ] Guardar facturas y RFE durante al menos 6 años.  
+- [ ] Mantener un formato legible y exportable (XML, CSV, PDF).  
+- [ ] Garantizar accesibilidad inmediata para contribuyente y AEAT.  
+
+## 6. Documentación obligatoria
+- [ ] Manual de uso del software.  
+- [ ] Manual técnico de generación de RFE y encadenamiento.  
+- [ ] Ejemplos de RFE válidos.  
+- [ ] Declaración responsable de cumplimiento de Verifactu.  
+
+## 7. Sanciones a evitar
+- No usar software homologado → multa hasta 50.000 euros.  
+- Alterar o borrar registros → multa entre 1.000 y 150.000 euros.  
