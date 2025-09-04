@@ -8,4 +8,6 @@ export * from "./users.js";
 // Invoices API
 export * from "./invoices.js";
 
+// Nordigen API
+export * from "./nordigen.js";
 
