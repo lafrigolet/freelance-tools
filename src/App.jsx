@@ -1,11 +1,13 @@
 import React from 'react';
 import './App.css';
+import CheckoutForm from './features/getnet/CheckoutForm';
 
 function App() {
   return (
       <div className="App">
         <header className="App-header">
-          <h1>Firebase Management</h1>
+          <h1>Checkout Getnet</h1>
+          <CheckoutForm />
         </header>
       </div>
   );
