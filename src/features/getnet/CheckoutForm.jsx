@@ -7,7 +7,7 @@ import {
   Grid,
   CircularProgress
 } from "@mui/material";
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { createOrder } from './getnet';
 
 const CheckoutForm = () => {
   const [formData, setFormData] = useState({
@@ -30,9 +30,6 @@ const CheckoutForm = () => {
     setLoading(true);
 
     try {
-      const functions = getFunctions();
-      const createOrder = httpsCallable(functions, "createOrderCallable");
-
       // Call Firebase Function with the amount
       const result = await createOrder({
         amount: formData.amount,

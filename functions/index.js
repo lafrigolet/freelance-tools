@@ -7,7 +7,9 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-import {setGlobalOptions} from "firebase-functions";
+import { setGlobalOptions } from "firebase-functions";
+// import { onRequest } from "firebase-functions/https";
+// import logger from "firebase-functions/logger";
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
@@ -25,4 +27,5 @@ import { initializeApp } from "firebase-admin/app";
 
 initializeApp();
 
+export * from "./getnet.js";
 
