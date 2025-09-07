@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import InputBase from "@mui/material/InputBase";
 import Box from "@mui/material/Box";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import { styled, alpha } from "@mui/material/styles";
 import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
@@ -47,13 +49,25 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 export default function Navbar() {
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
     <AppBar position="fixed" color="inherit" elevation={1}>
       <Toolbar>
         {/* Left Section: Logo or Menu */}
-        <IconButton edge="start" color="inherit" sx={{ mr: 2 }}>
-          <MenuIcon />
-        </IconButton>
+        {/* Show menu icon only on mobile */}
+        <Box sx={{ display: { xs: "flex", md: "none" } }}>
+          <IconButton edge="start" color="inherit" onClick={handleMenuOpen}>
+            <MenuIcon />
+          </IconButton>
+        </Box>
 
         <Typography
           variant="h6"
@@ -64,7 +78,6 @@ export default function Navbar() {
           MyApp
         </Typography>
 
-
         {/* Center Section: Search */}
         <Search>
           <SearchIconWrapper>
@@ -73,31 +86,55 @@ export default function Navbar() {
           <StyledInputBase placeholder="Search…" inputProps={{ "aria-label": "search" }} />
         </Search>
 
-        <Typography
-          component={Link}
-          to="/"
-          variant="h6"
-          sx={{ textDecoration: "none", color: "inherit", mr: 2 }}
-        >
-          Home
-        </Typography>
+        {/* Menu links for desktop */}
+        <Box sx={{ display: { xs: "none", md: "flex" } }}>
+          <Typography
+            component={Link}
+            to="/"
+            variant="h6"
+            sx={{ textDecoration: "none", color: "inherit", mr: 2 }}
+          >
+            Home
+          </Typography>
 
-        <Typography
-          component={Link}
-          to="/about"
-          variant="h6"
-          sx={{ textDecoration: "none", color: "inherit" }}
-        >
-          About
-        </Typography>
-        
+          <Typography
+            component={Link}
+            to="/about"
+            variant="h6"
+            sx={{ textDecoration: "none", color: "inherit" }}
+          >
+            About
+          </Typography>
+        </Box>
+
         {/* Right Section: Profile */}
         <Box sx={{ flexGrow: 1 }} />
         <IconButton edge="end" color="inherit">
           <AccountCircle />
         </IconButton>
-
       </Toolbar>
+
+      {/* Dropdown Menu for mobile */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "left",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "left",
+        }}
+      >
+        <MenuItem component={Link} to="/" onClick={handleMenuClose}>
+          Home
+        </MenuItem>
+        <MenuItem component={Link} to="/about" onClick={handleMenuClose}>
+          About
+        </MenuItem>
+      </Menu>
     </AppBar>
   );
 }
