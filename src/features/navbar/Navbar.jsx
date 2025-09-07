@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import InputBase from "@mui/material/InputBase";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import { styled, alpha } from "@mui/material/styles";
 import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
@@ -56,13 +57,25 @@ export default function Navbar() {
   // user comes from your AuthProvider
   const { user } = useAuthContext(); 
   
+  const [anchorEl, setAnchorEl] = useState(null);
+
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
     <AppBar position="fixed" color="inherit" elevation={1}>
       <Toolbar>
         {/* Left Section: Logo or Menu */}
-        <IconButton edge="start" color="inherit" sx={{ mr: 2 }}>
-          <MenuIcon />
-        </IconButton>
+        {/* Show menu icon only on mobile */}
+        <Box sx={{ display: { xs: "flex", md: "none" } }}>
+          <IconButton edge="start" color="inherit" onClick={handleMenuOpen}>
+            <MenuIcon />
+          </IconButton>
+        </Box>
 
         <Typography
           variant="h6"
@@ -84,23 +97,26 @@ export default function Navbar() {
           />
         </Search>
 
-        <Typography
-          component={Link}
-          to="/"
-          variant="h6"
-          sx={{ textDecoration: "none", color: "inherit", mr: 2 }}
-        >
-          Home
-        </Typography>
+        {/* Menu links for desktop */}
+        <Box sx={{ display: { xs: "none", md: "flex" } }}>
+          <Typography
+            component={Link}
+            to="/"
+            variant="h6"
+            sx={{ textDecoration: "none", color: "inherit", mr: 2 }}
+          >
+            Home
+          </Typography>
 
-        <Typography
-          component={Link}
-          to="/about"
-          variant="h6"
-          sx={{ textDecoration: "none", color: "inherit" }}
-        >
-          About
-        </Typography>
+          <Typography
+            component={Link}
+            to="/about"
+            variant="h6"
+            sx={{ textDecoration: "none", color: "inherit" }}
+          >
+            About
+          </Typography>
+        </Box>
 
         {/* Right Section: Auth / Profile */}
         <Box sx={{ flexGrow: 1 }} />
@@ -116,6 +132,28 @@ export default function Navbar() {
           </>
         )}
       </Toolbar>
+
+      {/* Dropdown Menu for mobile */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "left",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "left",
+        }}
+      >
+        <MenuItem component={Link} to="/" onClick={handleMenuClose}>
+          Home
+        </MenuItem>
+        <MenuItem component={Link} to="/about" onClick={handleMenuClose}>
+          About
+        </MenuItem>
+      </Menu>
     </AppBar>
   );
 }
