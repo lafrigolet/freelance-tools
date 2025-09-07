@@ -9,6 +9,7 @@ import { styled, alpha } from "@mui/material/styles";
 import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
 import AccountCircle from "@mui/icons-material/AccountCircle";
+import { Link } from "react-router-dom";
 
 // Custom styled search box
 const Search = styled("div")(({ theme }) => ({
@@ -63,6 +64,7 @@ export default function Navbar() {
           MyApp
         </Typography>
 
+
         {/* Center Section: Search */}
         <Search>
           <SearchIconWrapper>
@@ -71,11 +73,30 @@ export default function Navbar() {
           <StyledInputBase placeholder="Search…" inputProps={{ "aria-label": "search" }} />
         </Search>
 
+        <Typography
+          component={Link}
+          to="/"
+          variant="h6"
+          sx={{ textDecoration: "none", color: "inherit", mr: 2 }}
+        >
+          Home
+        </Typography>
+
+        <Typography
+          component={Link}
+          to="/about"
+          variant="h6"
+          sx={{ textDecoration: "none", color: "inherit" }}
+        >
+          About
+        </Typography>
+        
         {/* Right Section: Profile */}
         <Box sx={{ flexGrow: 1 }} />
         <IconButton edge="end" color="inherit">
           <AccountCircle />
         </IconButton>
+
       </Toolbar>
     </AppBar>
   );
