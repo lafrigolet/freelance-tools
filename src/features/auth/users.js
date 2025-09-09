@@ -32,7 +32,7 @@ const addUser            = httpsCallable(functions, "addUser");
 const deleteUser         = httpsCallable(functions, "deleteUser");
 const setUserRole        = httpsCallable(functions, "setUserRole");
 const sendMagicLinkEmail = httpsCallable(functions, "sendMagicLinkEmail");
-const magicLinkHandle    = httpsCallable(functions, "magicLinkHandler");
+const registerUser       = httpsCallable(functions, "registerUser");
 
 async function waitForUserLinkClick(email) {
   return await new Promise((resolve, reject) => {
@@ -69,80 +69,15 @@ async function waitForUserLinkClick(email) {
   });
 }
 
-const userExist = async (email) => {
-  const userDoc = await getDoc(firestoreDoc(db, "users", email));
-  return userDoc.exists();
-};
-
-const signUpUser = async ({
-  email,
-  firstName,
-  lastName,
-  phone
-}) => {
-  if (!(await userExist(email))) {
-    let userCredential;
-    try {
-      const result = await sendMagicLinkEmail({
-        to: email,
-        appName: "Bill App",
-        recipientName: firstName,
-        expirationMinutes: 5,
-        supportEmail: "billapp74@gmail.com"
-      });
-
-      userCredential = await waitForUserLinkClick(email);
-      const { uid } = userCredential.user;
-
-      await setDoc(firestoreDoc(db, "users", uid), {
-        uid,
-        email,
-        firstName,
-        lastName,
-        phone,
-        createdAt: new Date()
-      });
-      
-      return userCredential;
-
-    } catch (error) {
-      console.error("Error during signUpUser:", error);
-
-      if (userCredential?.user) {
-        const { uid } = userCredential.user;
-
-        try {
-          await deleteUserAuth(userCredential.user);
-          console.log("Rolled back: user deleted from Firebase Auth");
-        } catch (authErr) {
-          console.warn("Failed to delete user from Auth:", authErr);
-        }
-
-        try {
-          await deleteDoc(firestoreDoc(db, "users", uid));
-          console.log("Rolled back: user document deleted from Firestore");
-        } catch (fsErr) {
-          console.warn("Failed to delete user document from Firestore:", fsErr);
-        }
-      }
-
-      throw error;
-    }
-  }
-};
-
 const loginUser = async ({ email }) => {
-  if (await userExist(email)) {
-    const result = await sendMagicLinkEmail({
-      to: email,
-      appName: "Bill App",
-      recipientName: '',
-      expirationMinutes: 5,
-      supportEmail: "billapp74@gmail.com",
-    });
-    
-    const token = await waitForUserLinkClick(email);
-  }
+  await sendMagicLinkEmail({ to:email, exist: true });
+  await waitForUserLinkClick(email);
+}
+
+const signUpUser = async ({ email, firstName, lastName, phone }) => {
+  await sendMagicLinkEmail({ to:email, firstName: firstName, exist: false});
+  await waitForUserLinkClick(email);
+  await registerUser({ email, firstName, lastName, phone });
 }
 
 export {

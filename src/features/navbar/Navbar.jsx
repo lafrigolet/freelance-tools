@@ -14,8 +14,8 @@ import AccountCircle from "@mui/icons-material/AccountCircle";
 import { Link } from "react-router-dom";
 
 // Import your existing components
-import { LoginDialog, LoginButton } from '../auth/LoginDialog';
-import SignUpDialog from '../auth/SignUpDialog';
+import { LoginDialog, LoginButton } from "../auth/LoginDialog";
+import SignUpDialog from "../auth/SignUpDialog";
 import { useAuthContext } from "../auth/AuthContext";
 
 // Custom styled search box
@@ -54,25 +54,24 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 export default function Navbar() {
-  // user comes from your AuthProvider
-  const { user } = useAuthContext(); 
-  
-  const [anchorEl, setAnchorEl] = useState(null);
+  const { user, logout } = useAuthContext(); // assuming logout() is available
+  const [mobileAnchorEl, setMobileAnchorEl] = useState(null);
+  const [userAnchorEl, setUserAnchorEl] = useState(null);
 
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
+  // Mobile menu handlers
+  const handleMobileMenuOpen = (event) => setMobileAnchorEl(event.currentTarget);
+  const handleMobileMenuClose = () => setMobileAnchorEl(null);
+
+  // User menu handlers
+  const handleUserMenuOpen = (event) => setUserAnchorEl(event.currentTarget);
+  const handleUserMenuClose = () => setUserAnchorEl(null);
 
   return (
     <AppBar position="fixed" color="inherit" elevation={1}>
       <Toolbar>
         {/* Left Section: Logo or Menu */}
-        {/* Show menu icon only on mobile */}
         <Box sx={{ display: { xs: "flex", md: "none" } }}>
-          <IconButton edge="start" color="inherit" onClick={handleMenuOpen}>
+          <IconButton edge="start" color="inherit" onClick={handleMobileMenuOpen}>
             <MenuIcon />
           </IconButton>
         </Box>
@@ -107,7 +106,6 @@ export default function Navbar() {
           >
             Home
           </Typography>
-
           <Typography
             component={Link}
             to="/about"
@@ -122,9 +120,34 @@ export default function Navbar() {
         <Box sx={{ flexGrow: 1 }} />
 
         {user ? (
-          <IconButton edge="end" color="inherit">
-            <AccountCircle />
-          </IconButton>
+          <>
+            <IconButton edge="end" color="inherit" onClick={handleUserMenuOpen}>
+              <AccountCircle />
+            </IconButton>
+            <Menu
+              anchorEl={userAnchorEl}
+              open={Boolean(userAnchorEl)}
+              onClose={handleUserMenuClose}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+            >
+              <MenuItem
+                component={Link}
+                to="/profile"
+                onClick={handleUserMenuClose}
+              >
+                Profile
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  logout();
+                  handleUserMenuClose();
+                }}
+              >
+                Logout
+              </MenuItem>
+            </Menu>
+          </>
         ) : (
           <>
             <LoginButton />
@@ -135,22 +158,16 @@ export default function Navbar() {
 
       {/* Dropdown Menu for mobile */}
       <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-        anchorOrigin={{
-          vertical: "top",
-          horizontal: "left",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "left",
-        }}
+        anchorEl={mobileAnchorEl}
+        open={Boolean(mobileAnchorEl)}
+        onClose={handleMobileMenuClose}
+        anchorOrigin={{ vertical: "top", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
       >
-        <MenuItem component={Link} to="/" onClick={handleMenuClose}>
+        <MenuItem component={Link} to="/" onClick={handleMobileMenuClose}>
           Home
         </MenuItem>
-        <MenuItem component={Link} to="/about" onClick={handleMenuClose}>
+        <MenuItem component={Link} to="/about" onClick={handleMobileMenuClose}>
           About
         </MenuItem>
       </Menu>

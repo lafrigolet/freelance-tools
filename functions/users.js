@@ -84,10 +84,30 @@ export const setUserRole = onCall({ region: "us-central1" }, async ({ auth, data
   return { message: `Role '${role}' set for user ${uid}` };
 });
 
+const userExist = async ({ email }) => {
+  try {
+    const userRecord = await getAuth().getUserByEmail(email);
+    return true;
+  } catch (err) {
+    console.log(err);
+    return false;
+  }
+}
+
 export const sendMagicLinkEmail = onCall(async (req) => {
   const db = getFirestore();
-  const { to, appName, recipientName, expirationMinutes, supportEmail } = req.data;
+  const {
+    to,
+    appName = "Bill App",
+    recipientName = "",
+    expirationMinutes = 5,
+    supportEmail = "billapp74@gmail.com",
+    exist,
+  } = req.data;
 
+  if (exist != await userExist({ email:to }))
+    return;
+  
   if (!to) throw new Error("Missing email address");
 
   // 1. Generate our own magic link token
@@ -202,3 +222,29 @@ export const magicLinkHandler = onRequest(async (req, res) => {
 
   res.status(200).send("You may now return to the app");
 });
+
+// Errors are handled by exceptions on the client
+export const registerUser = onCall(async (req) => {
+  const auth = getAuth();
+  const db = getFirestore();
+  const { email, firstName, lastName, phone } = req.data;
+
+  if (!email)
+    throw new Error("Email is required");
+
+  const userRecord = await auth.getUserByEmail(email);
+  const { uid } = userRecord;
+  
+  // Create/update Firestore user document
+  await db.collection("users").doc(uid).set({
+    uid,
+    email,
+    firstName,
+    lastName,
+    phone,
+    createdAt: new Date(),
+  });
+  
+  return { success: true, uid };
+});
+

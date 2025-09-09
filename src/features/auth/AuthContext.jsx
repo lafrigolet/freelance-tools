@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth"; // 👈 import signOut
 import { auth } from "../../firebase";
 
 const AuthContext = createContext(null);
@@ -15,19 +15,32 @@ export function AuthProvider({ children }) {
         const tokenResult = await firebaseUser.getIdTokenResult(true);
         setUser(firebaseUser);
         setClaims(tokenResult.claims || {});
-        console.log('token claims:', tokenResult.claims);
+        console.log("token claims:", tokenResult.claims);
       } else {
         setUser(null);
         setClaims({});
       }
-      console.log('user claims:', claims);
+      console.log("user claims:", claims);
       setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      setClaims({});
+      console.log("User signed out");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, setUser, claims, setClaims, loading }}>
+    <AuthContext.Provider
+      value={{ user, setUser, claims, setClaims, loading, logout }} 
+    >
       {children}
     </AuthContext.Provider>
   );
