@@ -12,14 +12,16 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^7.3.1",
-    "@mui/material": "^7.3.1",
+    "@mui/icons-material": "^7.3.2",
+    "@mui/material": "^7.3.2",
     "i18next": "^25.3.6",
     "i18next-browser-languagedetector": "^8.2.0",
     "i18next-http-backend": "^3.0.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-i18next": "^15.6.1"
+    "react-i18next": "^15.6.1",
+    "react-router-dom": "^7.8.2",
+    "react-world-flags": "^1.6.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
