@@ -1,12 +1,11 @@
 import { onCall, onRequest } from "firebase-functions/v2/https";
-import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import smtpConfig from "./nodemailer-conf.js";
 import nodemailer from "nodemailer";
 import { randomUUID } from "crypto";
 
-export const listUsers = onCall({ region: "us-central1" }, async (request) => {
+export const listUsers = onCall(async (request) => {
   const context = request;
 
   console.log("Auth context: ", context.auth);
@@ -32,7 +31,7 @@ export const listUsers = onCall({ region: "us-central1" }, async (request) => {
 });
 
 // Add new user with default role
-export const addUser = onCall({ region: "us-central1" }, async ({ auth, data }) => {
+export const addUser = onCall(async ({ auth, data }) => {
   if (auth?.token?.role !== "admin") {
     throw new functions.https.HttpsError("permission-denied", "Only admins can add users.");
   }
@@ -45,7 +44,7 @@ export const addUser = onCall({ region: "us-central1" }, async ({ auth, data }) 
 
 
 // Delete user
-export const deleteUser = onCall({ region: "us-central1" }, async ({ auth, data }) => {
+export const deleteUser = onCall(async ({ auth, data }) => {
   if (auth?.token?.role !== "admin") {
     throw new functions.https.HttpsError("permission-denied", "Only admins can delete users.");
   }
@@ -60,7 +59,7 @@ export const deleteUser = onCall({ region: "us-central1" }, async ({ auth, data 
 });
 
 // Set user role (admin, manager, user)
-export const setUserRole = onCall({ region: "us-central1" }, async ({ auth, data }) => {
+export const setUserRole = onCall(async ({ auth, data }) => {
   // Only allow users with role "admin" to set roles
   if (auth?.token?.role !== "admin") {
     throw new Error("Only admins can set roles.");
@@ -84,12 +83,11 @@ export const setUserRole = onCall({ region: "us-central1" }, async ({ auth, data
   return { message: `Role '${role}' set for user ${uid}` };
 });
 
-const userExist = async ({ email }) => {
+const userExist = async (email) => {
   try {
     const userRecord = await getAuth().getUserByEmail(email);
     return true;
   } catch (err) {
-    console.log(err);
     return false;
   }
 }
@@ -105,8 +103,11 @@ export const sendMagicLinkEmail = onCall(async (req) => {
     exist,
   } = req.data;
 
-  if (exist != await userExist({ email:to }))
+  console.log(to, exist, await userExist(to));
+  if (exist != await userExist(to))
     return;
+
+  console.log('sending email');
   
   if (!to) throw new Error("Missing email address");
 

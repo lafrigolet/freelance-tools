@@ -1,4 +1,4 @@
-# User Management with Firebase
+# Firebase
 
 This branch handles firebase setup. It is intented to keep all the logic
 for switching between firebase or emulator deploying.
@@ -19,9 +19,19 @@ src/
  ├─ firebase.js
  └─ firebase-emulators.js
 
+# User Management
 
+## Components
+### RoleGuard Component
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+The RoleGuard component is used to control access to parts of the application based on the authenticated user's role. It checks the user's claims from the AuthContext and only renders its children if the user has one of the allowed roles. Otherwise, it renders a fallback message or component.
+
+#### Example of use 
+```jsx
+      <RoleGuard allowedRoles={["editor", "admin"]} fallback={<div>No access</div>}>
+        <div>Editor tools</div>
+      </RoleGuard>
+```
 
 
 # Navbar

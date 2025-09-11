@@ -7,7 +7,7 @@ import "./App.css";
 import { LoginDialog, LoginButton } from './features/auth/LoginDialog';
 import SignUpDialog from './features/auth/SignUpDialog';
 import { AuthProvider } from "./features/auth/AuthContext";
-
+import RoleGuard from './features/auth/RoleGuard';
 
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
