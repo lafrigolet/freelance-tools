@@ -19,7 +19,32 @@ src/
  ├─ firebase.js
  └─ firebase-emulators.js
 
+---
 # User Management
+
+# Files
+
+utils/
+ └─ setAdmin.js                    # For setting admin role for a given email
+
+functions/
+ └─ users.js                       # Firebase user functions
+
+src/
+ └─ features/
+     └─ auth/
+         ├─ AuthContext.jsx        # React context for Auth
+         ├─ LoginDialog.jsx        # Login form
+         ├─ PhoneNumberInput.jsx   # Phone number input form
+         ├─ RoleGuard.jsx          # Enable/Disable react component
+         ├─ SignUpDialog.jsx       # SignUp form
+         └─ users.js               # Users helpers functions
+
+
+# Setting the first admin user 
+User must exist first
+
+node utils/setAdmin.js <email>
 
 ## Components
 ### RoleGuard Component
@@ -33,7 +58,7 @@ The RoleGuard component is used to control access to parts of the application ba
       </RoleGuard>
 ```
 
-
+---
 # Navbar
 
 ## Overview
