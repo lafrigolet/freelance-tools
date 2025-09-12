@@ -5,10 +5,9 @@ import smtpConfig from "./nodemailer-conf.js";
 import nodemailer from "nodemailer";
 import { randomUUID } from "crypto";
 
+
 export const listUsers = onCall(async (request) => {
   const context = request;
-
-  console.log("Auth context: ", context.auth);
 
   if (!context.auth) {
     throw new Error("User must be authenticated");
@@ -43,19 +42,90 @@ export const addUser = onCall(async ({ auth, data }) => {
 });
 
 
-// Delete user
+// Delete user by email
 export const deleteUser = onCall(async ({ auth, data }) => {
   if (auth?.token?.role !== "admin") {
-    throw new functions.https.HttpsError("permission-denied", "Only admins can delete users.");
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "Only admins can delete users."
+    );
   }
 
-  const { uid } = data;
-  if (!uid) {
-    throw new Error("'uid' is required.");
+  const { email } = data;
+  if (!email) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "'email' is required."
+    );
   }
 
-  await getAuth().deleteUser(uid);
-  return { message: `User ${uid} deleted.` };
+  const authService = getAuth();
+
+  // Look up user by email to get uid
+  const userRecord = await authService.getUserByEmail(email);
+  const uid = userRecord.uid;
+
+  // Delete from Firebase Auth
+  await authService.deleteUser(uid);
+
+  // Optionally, also delete from Firestore users/{uid}
+  await getFirestore().collection("users").doc(uid).delete();
+
+  return { message: `User ${email} (uid: ${uid}) deleted.` };
+});
+
+// Disable user by email
+export const disableUser = onCall(async ({ auth, data }) => {
+  // Only allow admins to disable accounts
+  if (auth?.token?.role !== "admin") {
+    throw new Error("Only admins can disable users.");
+  }
+
+  const { email } = data;
+  if (!email) {
+    throw new Error("'email' is required.");
+  }
+
+  const authService = getAuth();
+
+  // Look up the user by email
+  const userRecord = await authService.getUserByEmail(email);
+  const uid = userRecord.uid;
+
+  // Disable the user
+  await authService.updateUser(uid, { disabled: true });
+
+  return {
+    success: true,
+    message: `User ${email} has been disabled.`,
+  };
+});
+
+// Enable user by email
+export const enableUser = onCall(async ({ auth, data }) => {
+  // Only allow admins to disable accounts
+  if (auth?.token?.role !== "admin") {
+    throw new Error("Only admins can enable users.");
+  }
+
+  const { email } = data;
+  if (!email) {
+    throw new Error("'email' is required.");
+  }
+
+  const authService = getAuth();
+
+  // Look up the user by email
+  const userRecord = await authService.getUserByEmail(email);
+  const uid = userRecord.uid;
+
+  // Disable the user
+  await authService.updateUser(uid, { disabled: false });
+
+  return {
+    success: true,
+    message: `User ${email} has been disabled.`,
+  };
 });
 
 // Set user role (admin, manager, user)
@@ -103,12 +173,9 @@ export const sendMagicLinkEmail = onCall(async (req) => {
     exist,
   } = req.data;
 
-  console.log(to, exist, await userExist(to));
   if (exist != await userExist(to))
     return;
 
-  console.log('sending email');
-  
   if (!to) throw new Error("Missing email address");
 
   // 1. Generate our own magic link token
@@ -243,9 +310,80 @@ export const registerUser = onCall(async (req) => {
     firstName,
     lastName,
     phone,
-    createdAt: new Date(),
+    createdAt: new Date().toISOString(),
   });
   
   return { success: true, uid };
 });
+
+/**
+ * Callable: Get user data by email
+ */
+export const getUserData = onCall(async (req) => {
+  const { email } = req.data;
+  const db = getFirestore();
+  const auth = getAuth();
+
+  if (!email) {
+    throw new Error("Missing email");
+  }
+
+  // Get user UID from Firebase Auth
+  const userRecord = await auth.getUserByEmail(email);
+  const uid = userRecord.uid;
+
+  // Lookup Firestore document by UID
+  const ref = db.collection("users").doc(uid);
+  const snap = await ref.get();
+
+  // Always include claims
+  const claims = userRecord.customClaims || {};
+
+  if (!snap.exists) {
+    return { exists: false, uid, claims, data: null };
+  }
+
+  let userdata= snap.data();
+  delete userdata.uid;
+  
+  return {
+    exists: true,
+    claims,
+    data: userdata,
+  };
+});
+
+
+/**
+ * Callable: Set user data by email
+ */
+export const setUserData = onCall(async (req) => {
+  const { email, data, claims } = req.data;
+  const db = getFirestore();
+  const auth = getAuth();
+
+  if (!email) {
+    throw new Error("Missing email");
+  }
+  if (!data || typeof data !== "object") {
+    throw new Error("Missing or invalid data");
+  }
+
+  // Get user UID from Firebase Auth
+  const userRecord = await auth.getUserByEmail(email);
+  const uid = userRecord.uid;
+
+  // Merge user data into Firestore document keyed by UID
+  await db.collection("users").doc(uid).set(data, { merge: true });
+
+  // If claims are provided, update custom user claims
+  if (claims && typeof claims === "object") {
+    await auth.setCustomUserClaims(uid, claims);
+  }
+
+  return {
+    success: true,
+  };
+});
+
 
