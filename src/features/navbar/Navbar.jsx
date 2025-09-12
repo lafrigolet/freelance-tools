@@ -140,13 +140,6 @@ export default function Navbar() {
               </MenuItem>
               <MenuItem
                 component={Link}
-                to="/usermanagement"
-                onClick={handleUserMenuClose}
-              >
-                UserManagement
-              </MenuItem>
-              <MenuItem
-                component={Link}
                 to="/usercard"
                 onClick={handleUserMenuClose}
               >

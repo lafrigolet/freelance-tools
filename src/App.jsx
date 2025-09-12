@@ -8,7 +8,6 @@ import { LoginDialog, LoginButton } from './features/auth/LoginDialog';
 import SignUpDialog from './features/auth/SignUpDialog';
 import { AuthProvider } from "./features/auth/AuthContext";
 import RoleGuard from './features/auth/RoleGuard';
-import UserManagement from "./features/auth/UserManagement";
 import UserCard from "./features/auth/UserCard";
 
 
@@ -115,7 +114,6 @@ function App() {
           <main style={{ marginTop: 80, padding: 20 }}>
             <Routes>
               <Route path="/" element={<Home /> } />
-              <Route path="/usermanagement" element={<UserManagement />} />
               <Route path="/usercard" element={<UserCard email="billapp74@gmail.com"/>} />
               <Route path="/about" element={<About />} />
             </Routes>
