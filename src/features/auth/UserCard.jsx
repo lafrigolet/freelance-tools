@@ -18,7 +18,7 @@ import {
   enableUser,
 } from "./users";
 
-export default function UserFormCard({ email }) {
+export default function UserCard({ email }) {
   const [user, setUser] = useState(null);
   const [claims, setClaims] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -38,6 +38,7 @@ src/
          ├─ PhoneNumberInput.jsx   # Phone number input form
          ├─ RoleGuard.jsx          # Enable/Disable react component
          ├─ SignUpDialog.jsx       # SignUp form
+         ├─ UserCard.jsx           # A UserCard for helpdesk
          └─ users.js               # Users helpers functions
 
 

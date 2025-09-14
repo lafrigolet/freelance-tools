@@ -15,7 +15,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 import Chat from "./Chat";
-import UserFormCard from '../auth/UserCard';
+import UserCard from '../auth/UserCard';
 
 export default function SupportPanel() {
   const [chats, setChats] = useState([]);
@@ -107,7 +107,7 @@ export default function SupportPanel() {
         {/* Aquí puedes renderizar tu panel principal de helpdesk */}
         <Typography variant="h5" color="text.secondary">
           Helpdesk workspace
-          <UserFormCard email={expanded} />
+          <UserCard email={expanded} />
         </Typography>
       </Box>
     </Box>
