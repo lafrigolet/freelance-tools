@@ -17,6 +17,9 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./features/navbar/Navbar";
 
+import Chat from './features/helpdesk/Chat';
+import SupportPanel from './features/helpdesk/SupportPanelAccordion';
+
 const theme = createTheme({
   palette: {
     mode: "light", // or "dark"
@@ -111,11 +114,13 @@ function App() {
         <CssBaseline />
         <Router>
           <Navbar />
-          <main style={{ marginTop: 80, padding: 20 }}>
+          <main style={{ marginTop: 40, padding: 0 }}>
             <Routes>
               <Route path="/" element={<Home /> } />
               <Route path="/usercard" element={<UserCard email="billapp74@gmail.com"/>} />
               <Route path="/about" element={<About />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/supportpanel" element={<SupportPanel />} />
             </Routes>
           </main>
         </Router>

@@ -11,6 +11,7 @@ import { styled, alpha } from "@mui/material/styles";
 import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
 import AccountCircle from "@mui/icons-material/AccountCircle";
+import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import { Link } from "react-router-dom";
 
 // Import your existing components
@@ -108,6 +109,15 @@ export default function Navbar() {
           </Typography>
           <Typography
             component={Link}
+            to="/supportpanel"
+            variant="h6"
+            sx={{ textDecoration: "none", color: "inherit", mr: 2 }}
+          >
+            Support Panel
+          </Typography>
+
+          <Typography
+            component={Link}
             to="/about"
             variant="h6"
             sx={{ textDecoration: "none", color: "inherit" }}
@@ -161,9 +171,18 @@ export default function Navbar() {
             <SignUpDialog />
           </>
         )}
+        <IconButton
+          component={Link}
+          to="/chat"
+          color="inherit"
+          sx={{ mr: 1 }}
+        >
+          <WhatsAppIcon />
+        </IconButton>
       </Toolbar>
 
       {/* Dropdown Menu for mobile */}
+      
       <Menu
         anchorEl={mobileAnchorEl}
         open={Boolean(mobileAnchorEl)}
@@ -173,6 +192,9 @@ export default function Navbar() {
       >
         <MenuItem component={Link} to="/" onClick={handleMobileMenuClose}>
           Home
+        </MenuItem>
+        <MenuItem component={Link} to="/supportpanel" onClick={handleMobileMenuClose}>
+          Support Panel
         </MenuItem>
         <MenuItem component={Link} to="/about" onClick={handleMobileMenuClose}>
           About

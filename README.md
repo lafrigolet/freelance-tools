@@ -58,6 +58,110 @@ The RoleGuard component is used to control access to parts of the application ba
       </RoleGuard>
 ```
 
+# Customer Support Chat Documentation
+
+## Overview
+This project implements a real time chat system for customer support using React and Firebase Firestore. The solution includes two main roles
+
+- User customers can initiate chats from the website
+- Support support agents can manage multiple conversations via a support panel
+
+The chat is updated in real time through Firestore listeners and now supports image uploads
+
+## Components
+
+### Chat
+- src/features/chat/Chat.jsx  
+Displays a conversation between a user and support  
+
+When role is user
+- A random chatId is generated and persisted in localStorage
+- Messages are stored in Firestore under this chatId
+- Closing the chat only hides it locally the Firestore data remains
+- Users can upload images by selecting files or dragging and dropping them into the conversation
+- Uploaded images are stored in Firebase Storage and their download URLs are saved in Firestore
+
+When role is support
+- The chatId must be passed as a prop
+- Support can send and read messages for that chat
+- Closing the chat removes the conversation from Firestore and deletes related images from Firebase Storage
+
+### SupportPanel
+- src/features/chat/SupportPanel.jsx  
+Displays all active chats on the left column  
+
+Each chat shows
+- The chatId or customer identifier if available
+- The last message sent which may be text or an indicator that an image was sent
+
+Selecting a chat highlights it in blue and loads the Chat component on the right  
+When support closes a chat from the Chat component the chat disappears from the list and all messages and files are removed
+
+## Firestore Structure
+
+chats (collection)
+ └── chatId (document)
+      ├── participants: [ "user", "support" ]
+      ├── createdAt: timestamp
+      ├── updatedAt: timestamp
+      ├── lastMessage: string
+      └── messages (subcollection)
+           └── messageId (document)
+                ├── sender: "user" | "support"
+                ├── text: string (optional)
+                ├── imageUrl: string (optional)
+                └── createdAt: timestamp
+
+
+- Each user conversation is stored under a chatId
+- Messages are kept in a messages subcollection
+- Messages can contain text imageUrl or both
+- Metadata such as lastMessage and updatedAt are used for the SupportPanel list
+
+## Storage Structure
+
+chats (folder in Firebase Storage)
+ └── chatId (folder)
+      ├── 1693928400000_photo.jpg
+      ├── 1693928455000_invoice.png
+      └── 1693928502000_screenshot.jpg
+
+
+- Each chat has its own folder inside chats
+- Files are named with a timestamp prefix to avoid collisions
+- File references are linked back to Firestore messages via their imageUrl
+
+## Functionality
+
+- Users open a chat which creates or reuses a chat document in Firestore
+- Messages are stored in the subcollection and synced in real time to both roles
+- Users can upload images which are stored in Firebase Storage and linked in Firestore
+- Support agents see a list of chats ordered by updatedAt and can open one to reply
+
+Closing rules
+- User close only UI is affected Firestore data remains
+- Support close removes the chat document its messages and any uploaded images from Firebase Storage
+
+## Developer Notes
+
+- Chat uses Firestore onSnapshot to listen for real time updates
+- Chat scrolling is handled automatically to always show the latest message
+- Selected chat in SupportPanel is highlighted using Material UI ListItemButton with selected state
+- LocalStorage is used to persist chatId for anonymous users so the conversation continues across page reloads
+- Uploaded files are stored in Firebase Storage under chats chatId
+- Support close cleans up both Firestore and Storage to prevent unused data
+- Consider storing user metadata email name in the chat document to make the SupportPanel more user friendly
+- For long term history instead of deleting chats on close consider marking them with a status field such as closed to allow auditing
+
+## Future Improvements
+
+- Add unread message counters for each chat in the SupportPanel
+- Support multiple agents with chat assignment
+- Store and display customer information instead of chatId
+- Implement push notifications for new messages
+- Add previews and support for non image file uploads
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
 ---
 # Navbar
 
