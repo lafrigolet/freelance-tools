@@ -36,7 +36,7 @@ const registerUser       = httpsCallable(functions, "registerUser");
 const getUserData        = httpsCallable(functions, "getUserData");
 const setUserData        = httpsCallable(functions, "setUserData");
 const disableUserF       = httpsCallable(functions, "disableUser");
-const enableUserF       = httpsCallable(functions, "enableUser");
+const enableUserF        = httpsCallable(functions, "enableUser");
 
 
 async function waitForUserLinkClick(email) {

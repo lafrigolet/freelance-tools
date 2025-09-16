@@ -28,16 +28,16 @@ import {
 import { loginUser } from "./users";
 import { useAuthContext } from "./AuthContext";
 
-function LoginDialog({
+export default function LoginDialog({
   open,
   onClose,
+  handleSignUp,
   size = 'small',
-  continueUrl,
 }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [info, setInfo] = useState('Enter your email to receive a sign-in link.');
+  const [info, setInfo] = useState('Sign-up if you are a new user or enter an existing user email to receive log-in link.');
   const [severity, setSeverity] = useState('info');
   const [sent, setSent] = useState(false);
 
@@ -54,7 +54,7 @@ function LoginDialog({
     setEmail('');
     setLoading(false);
     setError(null);
-    setInfo('Enter your email to receive a sign-in link.');
+    setInfo('Sign-up if you are a new user or enter an existing user email to receive log-in link.');
     setSent(false);
   }, []);
 
@@ -155,6 +155,14 @@ function LoginDialog({
           {sent ? 'Close' : 'Cancel'}
         </Button>
 
+        <Button
+          onClick={handleSignUp}
+          color="primary"
+          aria-label="Send log-in link"
+        >
+          Sign Up
+        </Button>
+
         {loading || sent ? (
           <CircularProgress size={24} sx={{ mr: 2 }} />
         ) : (
@@ -172,32 +180,3 @@ function LoginDialog({
   );
 }
 
-
-function LoginButton({
-  openLabel = 'Login',
-  size = 'small',
-  continueUrl,
-  buttonProps = {}, // pass-through props to Button if you like
-}) {
-  const [open, setOpen] = useState(false);
-
-  const handleOpen = useCallback(() => setOpen(true), []);
-  const handleClose = useCallback(() => setOpen(false), []);
-
-  return (
-    <>
-      <Button variant="contained" color="primary" onClick={handleOpen} {...buttonProps}>
-        {openLabel}
-      </Button>
-
-      <LoginDialog
-        open={open}
-        onClose={handleClose}
-        size={size}
-        continueUrl={continueUrl}
-      />
-    </>
-  );
-}
-
-export { LoginDialog, LoginButton };

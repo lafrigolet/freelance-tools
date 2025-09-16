@@ -15,12 +15,17 @@ import PhoneNumberInput from "./PhoneNumberInput";
 import { signUpUser } from "./users";
 import { useAuthContext } from "./AuthContext";
 
-const SignUpDialog = ({ size = "small" }) => {
-  const [open, setOpen] = useState(false);
+const SignUpDialog = ({
+  size = "small",
+  email = "",
+  open,
+  onClose
+}) => {
+  const [signupOpen, setSignupOpen] = useState(open);
 
   // Estado único con estructura anidada para phone
   const [formData, setFormData] = useState({
-    email: "",
+    email: email,
     firstName: "",
     lastName: "",
     phone: { countryCode: "+34", phoneNumber: "" },
@@ -116,7 +121,7 @@ const SignUpDialog = ({ size = "small" }) => {
       setSeverity("info");
 
       setLoading(false);
-      setTimeout(() => setOpen(false), 2000);
+      setTimeout(() => setSignupOpen(false), 2000);
     } catch (error) {
       setInfo("Sign-up failed. Please try again.");
       setSeverity("error");
@@ -128,11 +133,7 @@ const SignUpDialog = ({ size = "small" }) => {
 
   return (
     <div>
-      <Button variant="contained" color="primary" onClick={() => setOpen(true)}>
-        Sign Up
-      </Button>
-
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
         <DialogTitle>Sign Up</DialogTitle>
         <DialogContent>
           {info && <Alert severity={severity}>{info}</Alert>}
@@ -201,7 +202,7 @@ const SignUpDialog = ({ size = "small" }) => {
         </DialogContent>
 
         <DialogActions>
-          <Button onClick={() => setOpen(false)} color="secondary" disabled={loading}>
+          <Button onClick={onClose} color="secondary" disabled={loading}>
             Cancel
           </Button>
           <Button
