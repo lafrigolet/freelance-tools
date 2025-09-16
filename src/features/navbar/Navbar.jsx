@@ -14,8 +14,7 @@ import AccountCircle from "@mui/icons-material/AccountCircle";
 import { Link } from "react-router-dom";
 
 // Import your existing components
-import { LoginDialog, LoginButton } from "../auth/LoginDialog";
-import SignUpDialog from "../auth/SignUpDialog";
+import LoginIconButton from "../auth/LoginIconButton";
 import { useAuthContext } from "../auth/AuthContext";
 
 // Custom styled search box
@@ -139,13 +138,6 @@ export default function Navbar() {
                 Profile
               </MenuItem>
               <MenuItem
-                component={Link}
-                to="/usercard"
-                onClick={handleUserMenuClose}
-              >
-                UserCard
-              </MenuItem>
-              <MenuItem
                 onClick={() => {
                   logout();
                   handleUserMenuClose();
@@ -157,8 +149,7 @@ export default function Navbar() {
           </>
         ) : (
           <>
-            <LoginButton />
-            <SignUpDialog />
+            <LoginIconButton />
           </>
         )}
       </Toolbar>
