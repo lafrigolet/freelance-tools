@@ -1,3 +1,14 @@
+import { initializeApp } from "firebase-admin/app";
+
+initializeApp();
+
+// Users API 
+export * from "./users.js";
+
+// GetNet API
+//export * from "./getnet.js";
+export * from "./paymentmethods.js";
+
 /**
  * Import function triggers from their respective submodules:
  *
@@ -23,9 +34,4 @@ import { setGlobalOptions } from "firebase-functions";
 // this will be the maximum concurrent request count.
 setGlobalOptions({ maxInstances: 10 });
 
-import { initializeApp } from "firebase-admin/app";
-
-initializeApp();
-
-export * from "./getnet.js";
 
