@@ -295,7 +295,7 @@ export const magicLinkHandler = onRequest(async (req, res) => {
 export const registerUser = onCall(async (req) => {
   const auth = getAuth();
   const db = getFirestore();
-  const { email, firstName, lastName, phone } = req.data;
+  const { email } = req.data;
 
   if (!email)
     throw new Error("Email is required");
@@ -310,11 +310,7 @@ export const registerUser = onCall(async (req) => {
   // Create/update Firestore user document
   await db.collection("users").doc(uid).set({
     uid,
-    email,
-    firstName,
-    lastName,
-    phone,
-    stripeUID: customer.id,
+    ...req.data,
     createdAt: new Date().toISOString(),
   });
   
@@ -370,13 +366,9 @@ export const setUserData = onCall(async (req) => {
   if (!email) {
     throw new Error("Missing email");
   }
-  if (!data || typeof data !== "object") {
-    throw new Error("Missing or invalid data");
-  }
 
   // Get user UID from Firebase Auth
-  const userRecord = await auth.getUserByEmail(email);
-  const uid = userRecord.uid;
+  const { uid } = await auth.getUserByEmail(email);
 
   // Merge user data into Firestore document keyed by UID
   await db.collection("users").doc(uid).set(data, { merge: true });
