@@ -163,5 +163,47 @@ const theme = createTheme({
     },
   },
 });
+```
 
 
+---
+
+# STRIPE
+
+This project integrates **Stripe Checkout (Payment Element)** with **Firebase Functions**.  
+Follow these steps to configure Stripe in both **test** and **production** environments.
+
+## Get Your Stripe API Keys
+
+1. Log into [Stripe Dashboard](https://dashboard.stripe.com/).  
+2. Navigate to **Developers → API keys**.  
+3. You’ll see:
+   - **Publishable key** (starts with `pk_test_...` or `pk_live_...`) → used in frontend.
+   - **Secret key** (starts with `sk_test_...` or `sk_live_...`) → used in backend (Firebase Functions).
+
+⚠️ Never expose the secret key in frontend code.
+
+## Store Secrets in Firebase
+
+Firebase Functions uses **Secrets Manager** for production keys.  
+Run the following in your project root:
+
+### Test mode
+```bash
+export STRIPE_SECRET=sk_test_12345
+firebase emulators:start --only functions
+```
+
+### Production Mode
+```bash
+firebase functions:secrets:set STRIPE_SECRET --project <your-test-project-id>
+```
+
+## Enabling Additional Payment Methods
+Stripe’s Payment Element automatically shows the methods that are:
+- Enabled in your Dashboard [Stripe Dashboard](https://dashboard.stripe.com/).  
+- Navigate to Settings -> Payments -> Payment Methods
+- Supported for the currency and customer region
+- Bizum → only for Spanish merchants, currency must be eur.
+- Google Pay → requires HTTPS (or localhost), Chrome/Android with Google Pay configured.
+- Apple Pay → requires domain verification in Stripe Dashboard and works only in Safari/iOS/macOS.

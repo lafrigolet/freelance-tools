@@ -15,9 +15,16 @@
   },
   "main": "index.js",
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/material": "^7.3.2",
+    "@stripe/react-stripe-js": "^4.0.2",
+    "@stripe/stripe-js": "^7.9.0",
+    "firebase": "^12.2.1",
     "firebase-admin": "^12.6.0",
     "firebase-functions": "^6.0.1",
-    "nodemailer": "^7.0.5"
+    "nodemailer": "^7.0.5",
+    "stripe": "^18.5.0"
   },
   "devDependencies": {
     "eslint": "^8.15.0",

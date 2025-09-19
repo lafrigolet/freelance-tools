@@ -138,6 +138,20 @@ export default function Navbar() {
                 Profile
               </MenuItem>
               <MenuItem
+                component={Link}
+                to="/stripe"
+                onClick={handleUserMenuClose}
+              >
+                Checkout
+              </MenuItem>
+              <MenuItem
+                component={Link}
+                to="/paymentmethods"
+                onClick={handleUserMenuClose}
+              >
+                Payment Methods
+              </MenuItem>
+              <MenuItem
                 onClick={() => {
                   logout();
                   handleUserMenuClose();

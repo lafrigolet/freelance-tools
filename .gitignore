@@ -27,3 +27,6 @@ dist-ssr
 # Firebase
 .firebaserc
 firebase.json
+
+# Secrets
+functions/secrets.sh

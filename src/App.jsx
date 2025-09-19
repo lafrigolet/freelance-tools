@@ -8,12 +8,16 @@ import { AuthProvider } from "./features/auth/AuthContext";
 import RoleGuard from './features/auth/RoleGuard';
 import UserCard from "./features/auth/UserCard";
 
+import { ErrorBoundary } from "react-error-boundary";
 
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./features/navbar/Navbar";
+
+import Stripe from './features/stripe/CheckoutForm2';
+import PaymentMethodsManager from './features/stripe/PaymentMethodsManager';
 
 const theme = createTheme({
   palette: {
@@ -102,6 +106,11 @@ function About() {
   );
 }
 
+
+
+
+
+
 function App() {
   return (
     <AuthProvider>
@@ -110,10 +119,14 @@ function App() {
         <Router>
           <Navbar />
           <main style={{ marginTop: 80, padding: 20 }}>
-            <Routes>
-              <Route path="/" element={<Home /> } />
-              <Route path="/about" element={<About />} />
-            </Routes>
+            <ErrorBoundary FallbackComponent={(error) => (<p>Oops: {error.message}</p>)}>
+              <Routes>
+                <Route path="/" element={<Home /> } />
+                <Route path="/stripe" element={<Stripe />} />
+                <Route path="/paymentmethods" element={<PaymentMethodsManager />} />
+                <Route path="/about" element={<About />} />
+              </Routes>
+            </ErrorBoundary>
           </main>
         </Router>
       </ThemeProvider>

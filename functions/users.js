@@ -4,7 +4,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import smtpConfig from "./nodemailer-conf.js";
 import nodemailer from "nodemailer";
 import { randomUUID } from "crypto";
-
+import { createCustomer } from "./stripe.js";
 
 export const listUsers = onCall(async (request) => {
   const context = request;
@@ -302,7 +302,11 @@ export const registerUser = onCall(async (req) => {
 
   const userRecord = await auth.getUserByEmail(email);
   const { uid } = userRecord;
-  
+
+  const customer = await createCustomer({
+    email: email,
+  });
+
   // Create/update Firestore user document
   await db.collection("users").doc(uid).set({
     uid,
@@ -310,6 +314,7 @@ export const registerUser = onCall(async (req) => {
     firstName,
     lastName,
     phone,
+    stripeUID: customer.id,
     createdAt: new Date().toISOString(),
   });
   

@@ -5,7 +5,8 @@ initializeApp();
 // Users API 
 export * from "./users.js";
 
-
+// Stripe API
+export * from "./stripe.js";
 /**
  * Import function triggers from their respective submodules:
  *
