@@ -16,7 +16,7 @@ export const createCustomer = onCall({ secrets: [STRIPE_SECRET] }, async ({ auth
   if (!customer)
     throw new HttpsError("Cant create stripe customer");
   
-  return { customerId: customer.id };
+  return { stripeUID: customer.id };
 });
 
 export const createOrGetCustomer = onCall({ secrets: [STRIPE_SECRET] }, async ({ auth }) => {
@@ -37,14 +37,13 @@ export const createOrGetCustomer = onCall({ secrets: [STRIPE_SECRET] }, async ({
     });
   }
 
-  return { customerId: customer.id };
+  return { stripeUID: customer.id };
 });
 
 
 export const createPaymentIntent = onCall({ secrets: [STRIPE_SECRET] }, async ({ data }) => {
   // init Stripe inside the function so it reads the secret at runtime
   const stripe = new Stripe(STRIPE_SECRET.value());
-  console.log("STRIPE SECRET ", stripe);
   
   try {
     const { amount, currency } = data;
@@ -69,8 +68,11 @@ export const createSetupIntent = onCall({ secrets: [STRIPE_SECRET] }, async ({ d
 
   const stripe = new Stripe(process.env.STRIPE_SECRET || STRIPE_SECRET.value());
 
+  if (!data.stripeUID)
+    throw new HttpsError("invalid-argument", "Missing stripeUID");
+  
   const setupIntent = await stripe.setupIntents.create({
-    customer: data.customerId,
+    customer: data.stripeUID,
     payment_method_types: ["card"], // can extend later
   });
 
@@ -78,21 +80,29 @@ export const createSetupIntent = onCall({ secrets: [STRIPE_SECRET] }, async ({ d
 });
 
 // functions/paymentMethods.js
-export const listPaymentMethods = onCall({ secrets: [STRIPE_SECRET] }, async ({ data }) => {
-  const stripe = new Stripe(process.env.STRIPE_SECRET || STRIPE_SECRET.value());
+export const listPaymentMethods = onCall({ secrets: [STRIPE_SECRET] }, async ({ data, auth }) => {
+  console.log("listPaymentMethods ");
 
+  if (!auth) throw new HttpsError("unauthenticated", "Login required");
+  const stripe = new Stripe(process.env.STRIPE_SECRET || STRIPE_SECRET.value());
+  
+  console.log("stripeUID ", data.stripeUID);
+  
   const paymentMethods = await stripe.paymentMethods.list({
-    customer: data.customerId,
+    customer: data.stripeUID,
     type: "card", // extend later if needed
   });
 
   return { paymentMethods };
 });
 
-export const setDefaultPaymentMethod = onCall({ secrets: [STRIPE_SECRET] }, async ({ data }) => {
+export const setDefaultPaymentMethod = onCall({ secrets: [STRIPE_SECRET] }, async ({ data, auth }) => {
+  console.log("setDefaultPaymentMethod ");
+  
+  if (!auth) throw new HttpsError("unauthenticated", "Login required");
   const stripe = new Stripe(process.env.STRIPE_SECRET || STRIPE_SECRET.value());
 
-  await stripe.customers.update(data.customerId, {
+  await stripe.customers.update(data.stripeUID, {
     invoice_settings: { default_payment_method: data.paymentMethodId },
   });
 

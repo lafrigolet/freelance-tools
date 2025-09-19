@@ -29,32 +29,37 @@ import {
   createSetupIntent
 } from "./stripe";
 
+import { useAuthContext } from "../auth/AuthContext";
 
-function PaymentMethodsManager({ customerId }) {
+function PaymentMethodsManager() {
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [defaultMethod, setDefaultMethod] = useState(null);
   const [adding, setAdding] = useState(false);
   const [clientSecret, setClientSecret] = useState(null);
+  const { userData } = useAuthContext();
+  const stripeUID = userData.stripeUID;
 
+  console.log("stripeUID---------------- ", stripeUID);
   // Load methods
   useEffect(() => {
     (async () => {
-      const res = await listPaymentMethods({ customerId });
+      console.log("stripeUID+++++++++++++++ ", stripeUID);
+      const res = await listPaymentMethods({ stripeUID });
       setPaymentMethods(res.data.paymentMethods.data);
       // Extract default method
       // Ideally fetch from customer object, but simplified here
     })();
-  }, [customerId]);
+  }, [stripeUID]);
 
   // Start add flow
   const startAddPaymentMethod = async () => {
-    const res = await createSetupIntent({ customerId });
+    const res = await createSetupIntent({ stripeUID });
     setClientSecret(res.data.clientSecret);
     setAdding(true);
   };
 
   return (
-    <Box maxWidth={600} mx="auto" mt={4}>
+    <Card sx={{ maxWidth: 600, minWidth: 400, mx: "auto", mt: 4, borderRadius: 2, padding: 2}}>
       <Typography variant="h5" gutterBottom>
         My Payment Methods
       </Typography>
@@ -73,7 +78,7 @@ function PaymentMethodsManager({ customerId }) {
                 <IconButton
                   edge="end"
                   aria-label="make default"
-                  onClick={() => setDefaultPaymentMethod({ customerId, paymentMethodId: pm.id })}
+                  onClick={() => setDefaultPaymentMethod({ stripeUID, paymentMethodId: pm.id })}
                 >
                   <StarIcon />
                 </IconButton>
@@ -99,7 +104,7 @@ function PaymentMethodsManager({ customerId }) {
       {adding && clientSecret && (
         <Elements stripe={stripePromise} options={{ clientSecret }}>
           <AddPaymentMethodForm
-            customerId={customerId}
+            stripeUID={stripeUID}
             onComplete={() => {
               setAdding(false);
               setClientSecret(null);
@@ -107,29 +112,48 @@ function PaymentMethodsManager({ customerId }) {
           />
         </Elements>
       )}
-    </Box>
+    </Card>
   );
 }
 
 // Sub-component for adding
-function AddPaymentMethodForm({ customerId, onComplete }) {
+function AddPaymentMethodForm({ stripeUID, onComplete }) {
   const stripe = useStripe();
   const elements = useElements();
+  const [clientSecret, setClientSecret] = React.useState(null);
+
+  // Get client_secret from Firebase function
+  useEffect(() => {
+    async function fetchSetupIntent() {
+      const res = await createSetupIntent({ stripeUID });
+      setClientSecret(res.data.clientSecret);
+    }
+    fetchSetupIntent();
+  }, [stripeUID]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe || !elements || !clientSecret) return;
 
+    // ✅ First validate the PaymentElement inputs
+    const { error: submitError } = await elements.submit();
+    if (submitError) {
+      console.error("Validation error:", submitError.message);
+      return;
+    }
+
+    // ✅ Then confirm setup
     const { error, setupIntent } = await stripe.confirmSetup({
       elements,
-      redirect: "if_required",
+      clientSecret,
+      redirect: "if_required", // avoids full page redirect unless needed
     });
 
     if (error) {
-      console.error(error.message);
+      console.error("Confirmation error:", error.message);
     } else {
-      console.log("Saved:", setupIntent.payment_method);
-      onComplete();
+      console.log("Saved payment method:", setupIntent.payment_method);
+      onComplete?.();
     }
   };
 
@@ -139,9 +163,9 @@ function AddPaymentMethodForm({ customerId, onComplete }) {
         <Typography variant="h6">Add New Payment Method</Typography>
         <form onSubmit={handleSubmit}>
           <Box mt={2} mb={2}>
-            <PaymentElement />
+            {clientSecret && <PaymentElement />}
           </Box>
-          <Button type="submit" variant="contained" disabled={!stripe}>
+          <Button type="submit" variant="contained" disabled={!stripe || !clientSecret}>
             Save
           </Button>
         </form>

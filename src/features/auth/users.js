@@ -85,12 +85,9 @@ const loginUser = async ({ email }) => {
 const signUpUser = async ({ email, firstName, lastName, phone }) => {
   await sendMagicLinkEmail({ to:email, firstName: firstName, exist: false});
   const user = await waitForUserLinkClick(email);
-  console.log("signUpUser *************");
   const res = await createCustomer({ email });
-  const { customerId } = res.data;
-  console.log("signUpUser *************", customerId);
-  await registerUser({ email, firstName, lastName, phone, customerId });
-  console.log("signUpUser *************", customerId);
+  const { stripeUID } = res.data;
+  await registerUser({ email, firstName, lastName, phone, stripeUID });
   const userData = await getUserData({ email });
   return { user, claims: userData.data.claims, userData: userData.data.data };
 }
