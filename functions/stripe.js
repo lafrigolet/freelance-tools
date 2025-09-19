@@ -62,7 +62,6 @@ export const createPaymentIntent = onCall({ secrets: [STRIPE_SECRET] }, async ({
 });
 
 
-// functions/setupIntent.js
 export const createSetupIntent = onCall({ secrets: [STRIPE_SECRET] }, async ({ data, auth }) => {
   if (!auth) throw new HttpsError("unauthenticated", "Login required");
 
@@ -79,32 +78,51 @@ export const createSetupIntent = onCall({ secrets: [STRIPE_SECRET] }, async ({ d
   return { clientSecret: setupIntent.client_secret };
 });
 
-// functions/paymentMethods.js
-export const listPaymentMethods = onCall({ secrets: [STRIPE_SECRET] }, async ({ data, auth }) => {
-  console.log("listPaymentMethods ");
 
+export const listPaymentMethods = onCall({ secrets: [STRIPE_SECRET] }, async ({ data, auth }) => {
   if (!auth) throw new HttpsError("unauthenticated", "Login required");
+  
   const stripe = new Stripe(process.env.STRIPE_SECRET || STRIPE_SECRET.value());
   
-  console.log("stripeUID ", data.stripeUID);
+  // Fetch customer with invoice_settings
+  const customer = await stripe.customers.retrieve(data.stripeUID);
   
   const paymentMethods = await stripe.paymentMethods.list({
     customer: data.stripeUID,
     type: "card", // extend later if needed
   });
 
-  return { paymentMethods };
+  return {
+    paymentMethods,
+    defaultPaymentMethod: customer.invoice_settings.default_payment_method || null,
+  };
 });
 
+
 export const setDefaultPaymentMethod = onCall({ secrets: [STRIPE_SECRET] }, async ({ data, auth }) => {
-  console.log("setDefaultPaymentMethod ");
-  
   if (!auth) throw new HttpsError("unauthenticated", "Login required");
+
   const stripe = new Stripe(process.env.STRIPE_SECRET || STRIPE_SECRET.value());
 
   await stripe.customers.update(data.stripeUID, {
-    invoice_settings: { default_payment_method: data.paymentMethodId },
+    invoice_settings: {
+      default_payment_method: data.paymentMethodId
+    },
   });
 
   return { success: true };
 });
+
+
+// functions/paymentMethods.js
+export const deletePaymentMethod = onCall({ secrets: [STRIPE_SECRET] },  async ({ data, auth }) => {
+  if (!auth) throw new HttpsError("unauthenticated", "Login required");
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET || STRIPE_SECRET.value());
+
+  // Detach the payment method from the customer
+  const deleted = await stripe.paymentMethods.detach(data.paymentMethodId);
+  
+  return { deleted };
+  }
+);

@@ -19,4 +19,5 @@ export const createPaymentIntent     = httpsCallable(functions, "createPaymentIn
 export const listPaymentMethods      = httpsCallable(functions, "listPaymentMethods");
 export const setDefaultPaymentMethod = httpsCallable(functions, "setDefaultPaymentMethod");
 export const createSetupIntent       = httpsCallable(functions, "createSetupIntent");
+export const deletePaymentMethod     = httpsCallable(functions, "deletePaymentMethod");
 

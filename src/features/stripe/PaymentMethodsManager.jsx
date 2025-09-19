@@ -26,7 +26,8 @@ import {
   stripePromise,
   listPaymentMethods,
   setDefaultPaymentMethod,
-  createSetupIntent
+  createSetupIntent,
+  deletePaymentMethod,
 } from "./stripe";
 
 import { useAuthContext } from "../auth/AuthContext";
@@ -39,18 +40,32 @@ function PaymentMethodsManager() {
   const { userData } = useAuthContext();
   const stripeUID = userData.stripeUID;
 
-  console.log("stripeUID---------------- ", stripeUID);
   // Load methods
   useEffect(() => {
     (async () => {
-      console.log("stripeUID+++++++++++++++ ", stripeUID);
       const res = await listPaymentMethods({ stripeUID });
       setPaymentMethods(res.data.paymentMethods.data);
-      // Extract default method
-      // Ideally fetch from customer object, but simplified here
+      setDefaultMethod(res.data.defaultPaymentMethod); // ✅ fetch from Stripe
     })();
   }, [stripeUID]);
 
+  const handleSetDefault = async (pmId) => {
+    await setDefaultPaymentMethod({ stripeUID, paymentMethodId: pmId });
+    // ✅ Re-fetch methods so UI is always consistent
+    const res = await listPaymentMethods({ stripeUID });
+    setPaymentMethods(res.data.paymentMethods.data);
+    setDefaultMethod(res.data.defaultPaymentMethod);
+  };
+
+  const handleDelete = async (pmId) => {
+    if (!window.confirm("Are you sure you want to delete this payment method?")) return;
+    await deletePaymentMethod({ paymentMethodId: pmId });
+    // ✅ Re-fetch list after deletion
+    const res = await listPaymentMethods({ stripeUID });
+    setPaymentMethods(res.data.paymentMethods.data);
+    setDefaultMethod(res.data.defaultPaymentMethod);
+  };
+  
   // Start add flow
   const startAddPaymentMethod = async () => {
     const res = await createSetupIntent({ stripeUID });
@@ -73,17 +88,26 @@ function PaymentMethodsManager() {
             />
             <ListItemSecondaryAction>
               {pm.id === defaultMethod ? (
-                <StarIcon color="primary" />
+                <IconButton
+                  edge="end"
+                  aria-label="make default"
+                >
+                  <StarIcon color="primary" />
+                </IconButton>
               ) : (
                 <IconButton
                   edge="end"
                   aria-label="make default"
-                  onClick={() => setDefaultPaymentMethod({ stripeUID, paymentMethodId: pm.id })}
+                  onClick={() => handleSetDefault(pm.id)}
                 >
                   <StarIcon />
                 </IconButton>
               )}
-              <IconButton edge="end" aria-label="delete">
+              <IconButton
+                edge="end"
+                aria-label="delete"
+                onClick={() => handleDelete(pm.id)}
+              >
                 <DeleteIcon />
               </IconButton>
             </ListItemSecondaryAction>
