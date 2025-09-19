@@ -36,7 +36,7 @@ const SignUpDialog = ({
   const [severity, setSeverity] = useState("info");
   const unsubscribeRef = useRef(null);
   const timeoutRef = useRef(null);
-  const { user, setUser } = useAuthContext();
+  const { setUser, setClaims, setUserData } = useAuthContext();
 
   const [errors, setErrors] = useState({
     email: null,
@@ -116,6 +116,11 @@ const SignUpDialog = ({
         lastName,
         phone,
       });
+
+      console.log("signUpUser -------------- ", result);
+      setUser(result.user);
+      setClaims(result.claims);
+      setUserData(result.userData);
 
       setInfo("User Signed Up.");
       setSeverity("info");

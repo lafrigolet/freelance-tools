@@ -55,14 +55,14 @@ async function waitForUserLinkClick(email) {
         const data = docSnap.data();
         if (data.token) {
           try {
-            const result = await signInWithCustomToken(auth, data.token);
+            const userCredential = await signInWithCustomToken(auth, data.token);
 
             await deleteDoc(docRef);
 
             clearTimeout(timeoutRef);
             unsubscribe?.();
 
-            resolve(result);
+            resolve(userCredential.user);
           } catch (err) {
             clearTimeout(timeoutRef);
             unsubscribe?.();
@@ -76,13 +76,17 @@ async function waitForUserLinkClick(email) {
 
 const loginUser = async ({ email }) => {
   await sendMagicLinkEmail({ to:email, exist: true });
-  await waitForUserLinkClick(email);
+  const user = await waitForUserLinkClick(email);
+  const userData = await getUserData({ email });
+  return { user, claims: userData.data.claims, userData: userData.data.data };
 }
 
 const signUpUser = async ({ email, firstName, lastName, phone }) => {
   await sendMagicLinkEmail({ to:email, firstName: firstName, exist: false});
-  await waitForUserLinkClick(email);
+  const user = await waitForUserLinkClick(email);
   await registerUser({ email, firstName, lastName, phone });
+  const userData = await getUserData({ email });
+  return { user, claims: userData.data.claims, userData: userData.data.data };
 }
 
 async function fetchUserData(email) {

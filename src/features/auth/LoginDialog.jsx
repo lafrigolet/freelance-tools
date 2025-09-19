@@ -41,7 +41,7 @@ export default function LoginDialog({
   const [severity, setSeverity] = useState('info');
   const [sent, setSent] = useState(false);
 
-  const { setUser } = useAuthContext();
+  const { setUser, setClaims, setUserData } = useAuthContext();
   const unsubscribeRef = useRef(null);
   const timeoutRef = useRef(null);
 
@@ -100,6 +100,11 @@ export default function LoginDialog({
       setSeverity('warning');
       
       const result = await loginUser({ email });
+
+      console.log("signUpUser -------------- ", result);
+      setUser(result.user);
+      setClaims(result.claims);
+      setUserData(result.userData);
 
       setInfo('User Logged In.');
       setSeverity('info');
