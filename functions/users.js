@@ -303,10 +303,6 @@ export const registerUser = onCall(async (req) => {
   const userRecord = await auth.getUserByEmail(email);
   const { uid } = userRecord;
 
-  const customer = await createCustomer({
-    email: email,
-  });
-
   // Create/update Firestore user document
   await db.collection("users").doc(uid).set({
     uid,

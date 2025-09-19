@@ -42,6 +42,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{ user, setUser, claims, setClaims, userData, setUserData, loading, logout }} 
     >
+      {console.log("AuthContext ************* ", user, claims, userData)}
       {children}
     </AuthContext.Provider>
   );

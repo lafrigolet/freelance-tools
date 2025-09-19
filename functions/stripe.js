@@ -5,18 +5,19 @@ import Stripe from "stripe";
 // Store secret: firebase functions:secrets:set STRIPE_SECRET
 const STRIPE_SECRET = defineSecret("STRIPE_SECRET");
 
-export const createCustomer = async ({ email }) => {
+export const createCustomer = onCall({ secrets: [STRIPE_SECRET] }, async ({ auth }) => {
+  if (!auth) throw new HttpsError("unauthenticated", "Login required");
   const stripe = new Stripe(process.env.STRIPE_SECRET || STRIPE_SECRET.value());
   
   const customer = await stripe.customers.create({
-    email: email,
+    email: auth.token?.email,
   });
 
   if (!customer)
     throw new HttpsError("Cant create stripe customer");
   
-  return customer;
-}
+  return { customerId: customer.id };
+});
 
 export const createOrGetCustomer = onCall({ secrets: [STRIPE_SECRET] }, async ({ auth }) => {
   if (!auth) throw new HttpsError("unauthenticated", "Login required");

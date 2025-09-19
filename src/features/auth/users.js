@@ -26,6 +26,7 @@ import {
   functions,
 } from "../../firebase";
 
+
 ////// Firebase Functions Wrapping
 const listUsers          = httpsCallable(functions, "listUsers");
 const addUser            = httpsCallable(functions, "addUser");
@@ -37,7 +38,7 @@ const getUserData        = httpsCallable(functions, "getUserData");
 const setUserData        = httpsCallable(functions, "setUserData");
 const disableUserF       = httpsCallable(functions, "disableUser");
 const enableUserF        = httpsCallable(functions, "enableUser");
-
+const createCustomer     = httpsCallable(functions, "createCustomer");
 
 async function waitForUserLinkClick(email) {
   return await new Promise((resolve, reject) => {
@@ -84,7 +85,12 @@ const loginUser = async ({ email }) => {
 const signUpUser = async ({ email, firstName, lastName, phone }) => {
   await sendMagicLinkEmail({ to:email, firstName: firstName, exist: false});
   const user = await waitForUserLinkClick(email);
-  await registerUser({ email, firstName, lastName, phone });
+  console.log("signUpUser *************");
+  const res = await createCustomer({ email });
+  const { customerId } = res.data;
+  console.log("signUpUser *************", customerId);
+  await registerUser({ email, firstName, lastName, phone, customerId });
+  console.log("signUpUser *************", customerId);
   const userData = await getUserData({ email });
   return { user, claims: userData.data.claims, userData: userData.data.data };
 }
