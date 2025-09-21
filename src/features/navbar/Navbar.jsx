@@ -52,7 +52,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-export default function Navbar() {
+export default function Navbar({ menu, searchbar = false }) {
   const { user, logout } = useAuthContext();
   const [mobileAnchorEl, setMobileAnchorEl] = useState(null);
   const [userAnchorEl, setUserAnchorEl] = useState(null);
@@ -74,7 +74,7 @@ export default function Navbar() {
             <MenuIcon />
           </IconButton>
         </Box>
-
+        
         <Typography
           variant="h6"
           noWrap
@@ -83,41 +83,35 @@ export default function Navbar() {
         >
           MyApp
         </Typography>
-
+        
         {/* Center Section: Search */}
-        <Search>
-          <SearchIconWrapper>
-            <SearchIcon />
-          </SearchIconWrapper>
-          <StyledInputBase
-            placeholder="Search…"
-            inputProps={{ "aria-label": "search" }}
-          />
-        </Search>
-
+        {searchbar ? (
+          <Search>
+            <SearchIconWrapper>
+              <SearchIcon />
+            </SearchIconWrapper>
+            <StyledInputBase placeholder="Search…" inputProps={{ "aria-label": "search" }} />
+          </Search>
+        ):null}
+        
         {/* Menu links for desktop */}
         <Box sx={{ display: { xs: "none", md: "flex" } }}>
-          <Typography
-            component={Link}
-            to="/"
-            variant="h6"
-            sx={{ textDecoration: "none", color: "inherit", mr: 2 }}
-          >
-            Home
-          </Typography>
-          <Typography
-            component={Link}
-            to="/about"
-            variant="h6"
-            sx={{ textDecoration: "none", color: "inherit" }}
-          >
-            About
-          </Typography>
+          {menu.map((item) => (
+            <Typography
+              key={item[1]}
+              component={Link}
+              to={item[1]}
+              variant="h6"
+              sx={{ textDecoration: "none", color: "inherit", mr: 2 }}
+            >
+              {item[0]}
+            </Typography>
+          ))}
         </Box>
-
+        
         {/* Right Section: Auth / Profile */}
         <Box sx={{ flexGrow: 1 }} />
-
+        
         {user ? (
           <>
             <IconButton edge="end" color="inherit" onClick={handleUserMenuOpen}>
@@ -152,8 +146,8 @@ export default function Navbar() {
             <LoginIconButton />
           </>
         )}
+        
       </Toolbar>
-
       {/* Dropdown Menu for mobile */}
       <Menu
         anchorEl={mobileAnchorEl}
@@ -162,12 +156,15 @@ export default function Navbar() {
         anchorOrigin={{ vertical: "top", horizontal: "left" }}
         transformOrigin={{ vertical: "top", horizontal: "left" }}
       >
-        <MenuItem component={Link} to="/" onClick={handleMobileMenuClose}>
-          Home
-        </MenuItem>
-        <MenuItem component={Link} to="/about" onClick={handleMobileMenuClose}>
-          About
-        </MenuItem>
+        {menu.map((item) => (
+          <MenuItem
+            key={item[1]}
+            component={Link}
+            to={item[1]}
+            onClick={handleMobileMenuClose}>
+            {item[0]}
+          </MenuItem>
+        ))}
       </Menu>
     </AppBar>
   );
