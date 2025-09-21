@@ -102,12 +102,14 @@ Example:
 - Client → listens to magicLinks/{email} until the token appears, then signs in.
 
 ### Flow Diagram
+
+```mermaid
 sequenceDiagram
     participant User
     participant Client
     participant Firestore
-    participant FirebaseAuth
     participant CloudFunction
+    participant FirebaseAuth
 
     User->>Client: Enter email
     Client->>CloudFunction: request login/signup
@@ -129,7 +131,7 @@ sequenceDiagram
     Client->>FirebaseAuth: signInWithCustomToken(token)
     FirebaseAuth->>Client: returns authenticated user
     Client->>Firestore: delete magicLinks/{email}
-
+```
 
 ## Setting the first admin user 
 User must exist first
