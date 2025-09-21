@@ -53,7 +53,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 export default function Navbar() {
-  const { user, logout } = useAuthContext(); // assuming logout() is available
+  const { user, logout } = useAuthContext();
   const [mobileAnchorEl, setMobileAnchorEl] = useState(null);
   const [userAnchorEl, setUserAnchorEl] = useState(null);
 
