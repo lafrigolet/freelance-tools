@@ -15,15 +15,16 @@ for switching between firebase or emulator deploying.
 
 ---
 ## Files
+```bash
 src/
  ├─ firebase.js
  └─ firebase-emulators.js
-
+```
 ---
 # User Management
 
 ## Files
-
+```bash
 utils/
  └─ setAdmin.js                    # For setting admin role for a given email
 
@@ -41,6 +42,7 @@ src/
          ├─ LoginIconButton.jsx    # This is the starter of a login -> signup dialog flow
          ├─ UserCard.jsx           # A UserCard for helpdesk
          └─ users.js               # Users helpers functions
+```
 
 ## Firestore Collections for Users Feature
 
@@ -107,8 +109,8 @@ Example:
 sequenceDiagram
     participant User
     participant Client
-    participant Firestore
     participant CloudFunction
+    participant Firestore
     participant FirebaseAuth
 
     User->>Client: Enter email
