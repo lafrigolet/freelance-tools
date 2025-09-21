@@ -10,23 +10,39 @@ export function AuthProvider({ children }) {
   const [userData, setUserData] = useState({});
   const [loading, setLoading] = useState(true);
 
-  // useEffect(() => {
-  //   const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-  //     if (firebaseUser) {
-  //       const tokenResult = await firebaseUser.getIdTokenResult(true);
-  //       setUser(firebaseUser);
-  //       setClaims(tokenResult.claims || {});
-  //       console.log("token claims:", tokenResult.claims);
-  //     } else {
-  //       setUser(null);
-  //       setClaims({});
-  //     }
-  //     console.log("user claims:", claims);
-  //     setLoading(false);
-  //   });
-  //   return () => unsubscribe();
-  // }, []);
+  useEffect(() => {
+    let unsubscribeUserDoc;
 
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const tokenResult = await firebaseUser.getIdTokenResult(true);
+        setUser(firebaseUser);
+        setClaims(tokenResult.claims || {});
+
+        // 👇 Subscribe to Firestore user doc
+        const userRef = doc(db, "users", firebaseUser.uid);
+        unsubscribeUserDoc = onSnapshot(userRef, (snap) => {
+          if (snap.exists()) {
+            setUserData(snap.data());
+          } else {
+            setUserData(null);
+          }
+        });
+      } else {
+        setUser(null);
+        setClaims({});
+        setUserData(null);
+      }
+      setLoading(false);
+    });
+
+    // Cleanup both listeners
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeUserDoc) unsubscribeUserDoc();
+    };
+  }, []);
+  
   const logout = async () => {
     try {
       await signOut(auth);
