@@ -112,12 +112,14 @@ function About() {
 
 
 function App() {
+  const menu = [["Home", "/"], ["About", "/about"]];
+
   return (
     <AuthProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Router>
-          <Navbar />
+          <Navbar searchbar={true} menu={menu} />
           <main style={{ marginTop: 80, padding: 20 }}>
             <ErrorBoundary FallbackComponent={(error) => (<p>Oops: {error.message}</p>)}>
               <Routes>
