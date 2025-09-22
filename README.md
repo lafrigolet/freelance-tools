@@ -261,6 +261,22 @@ const theme = createTheme({
 This project integrates **Stripe Checkout (Payment Element)** with **Firebase Functions**.  
 Follow these steps to configure Stripe in both **test** and **production** environments.
 
+## Files
+
+```bash
+functions/
+ ├─ .secret.local                  # STRIPE_SECRET environment variable for firebase emulator
+ └─ stripe.js                      # Stripe functionality wrapping
+ 
+src/
+ └─ features/
+     └─ stripe/
+         ├─ PaymentMethodsManager.jsx        # React context for Auth
+         └─ stripe.js                        # Stripe helpers functions
+ 
+ 
+```
+
 ## Get Your Stripe API Keys
 
 1. Log into [Stripe Dashboard](https://dashboard.stripe.com/).  
