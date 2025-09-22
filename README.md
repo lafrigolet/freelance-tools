@@ -296,7 +296,12 @@ src/
          ├─ PaymentMethodsManager.jsx        # React context for Auth
          └─ stripe.js                        # Stripe helpers functions
  
- 
+public/
+ └─ card-logos/
+     ├─ visa.svg
+     ├─ mastercard.svg
+     └─ amex.svg
+
 ```
 
 ## Get Your Stripe API Keys
