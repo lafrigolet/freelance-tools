@@ -10,6 +10,12 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   IconButton,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -37,9 +43,10 @@ function PaymentMethodsManager() {
   const [defaultMethod, setDefaultMethod] = useState(null);
   const [adding, setAdding] = useState(false);
   const [clientSecret, setClientSecret] = useState(null);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, pmId: null });
   const { userData } = useAuthContext();
   const stripeUID = userData.stripeUID;
-
+  
   // Load methods
   useEffect(() => {
     (async () => {
@@ -58,12 +65,7 @@ function PaymentMethodsManager() {
   };
 
   const handleDelete = async (pmId) => {
-    if (!window.confirm("Are you sure you want to delete this payment method?")) return;
-    await deletePaymentMethod({ paymentMethodId: pmId });
-    // ✅ Re-fetch list after deletion
-    const res = await listPaymentMethods({ stripeUID });
-    setPaymentMethods(res.data.paymentMethods.data);
-    setDefaultMethod(res.data.defaultPaymentMethod);
+    setDeleteDialog({ open: true, pmId });
   };
   
   // Start add flow
@@ -74,69 +76,94 @@ function PaymentMethodsManager() {
   };
 
   return (
-    <Card sx={{ maxWidth: 600, minWidth: 400, mx: "auto", mt: 4, borderRadius: 2, padding: 2}}>
-      <Typography variant="h5" gutterBottom>
-        My Payment Methods
-      </Typography>
+    <>
+      <Card sx={{ maxWidth: 600, minWidth: 400, mx: "auto", mt: 4, borderRadius: 2, padding: 2}}>
+        <Typography variant="h5" gutterBottom>
+          My Payment Methods
+        </Typography>
 
-      <List>
-        {paymentMethods.map((pm) => (
-          <ListItem key={pm.id}>
-            <ListItemText
-              primary={`${pm.card.brand.toUpperCase()} •••• ${pm.card.last4}`}
-              secondary={`Expires ${pm.card.exp_month}/${pm.card.exp_year}`}
+        <List>
+          {paymentMethods.map((pm) => (
+            <ListItem key={pm.id}>
+              <ListItemText
+                primary={`${pm.card.brand.toUpperCase()} •••• ${pm.card.last4}`}
+                secondary={`Expires ${pm.card.exp_month}/${pm.card.exp_year}`}
+              />
+              <ListItemSecondaryAction>
+                {pm.id === defaultMethod ? (
+                  <Chip label="Default" color="primary" size="small" />
+                ) : (
+                  <IconButton
+                    edge="end"
+                    aria-label="make default"
+                    onClick={() => handleSetDefault(pm.id)}
+                  >
+                    <StarIcon />
+                  </IconButton>
+                )}
+                <IconButton
+                  edge="end"
+                  aria-label="delete"
+                  onClick={() => {setDeleteDialog({ open: true, pmId: pm.id });}}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </ListItemSecondaryAction>
+            </ListItem>
+          ))}
+        </List>
+
+        <Box mt={2}>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={startAddPaymentMethod}
+          >
+            Add Payment Method
+          </Button>
+        </Box>
+
+        {adding && clientSecret && (
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <AddPaymentMethodForm
+              stripeUID={stripeUID}
+              onComplete={async () => {
+                setAdding(false);
+                setClientSecret(null);
+                const res = await listPaymentMethods({ stripeUID });
+                setPaymentMethods(res.data.paymentMethods.data);
+                setDefaultMethod(res.data.defaultPaymentMethod);
+              }}
             />
-            <ListItemSecondaryAction>
-              {pm.id === defaultMethod ? (
-                <IconButton
-                  edge="end"
-                  aria-label="make default"
-                >
-                  <StarIcon color="primary" />
-                </IconButton>
-              ) : (
-                <IconButton
-                  edge="end"
-                  aria-label="make default"
-                  onClick={() => handleSetDefault(pm.id)}
-                >
-                  <StarIcon />
-                </IconButton>
-              )}
-              <IconButton
-                edge="end"
-                aria-label="delete"
-                onClick={() => handleDelete(pm.id)}
-              >
-                <DeleteIcon />
-              </IconButton>
-            </ListItemSecondaryAction>
-          </ListItem>
-        ))}
-      </List>
+          </Elements>
+        )}
+      </Card>
 
-      <Box mt={2}>
-        <Button
-          variant="outlined"
-          startIcon={<AddIcon />}
-          onClick={startAddPaymentMethod}
-        >
-          Add Payment Method
-        </Button>
-      </Box>
-
-      {adding && clientSecret && (
-        <Elements stripe={stripePromise} options={{ clientSecret }}>
-          <AddPaymentMethodForm
-            stripeUID={stripeUID}
-            onComplete={() => {
-              setAdding(false);
-              setClientSecret(null);
+      {/* Dialog component */}
+      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, pmId: null })}>
+        <DialogTitle>Delete Payment Method</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this card? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialog({ open: false, pmId: null })}>Cancel</Button>
+          <Button
+            color="error"
+            onClick={async () => {
+              await deletePaymentMethod({ paymentMethodId: deleteDialog.pmId });
+              const res = await listPaymentMethods({ stripeUID });
+              setPaymentMethods(res.data.paymentMethods.data);
+              setDefaultMethod(res.data.defaultPaymentMethod);
+              setDeleteDialog({ open: false, pmId: null });
             }}
-          />
-        </Elements>
-      )}
-    </Card>
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
 
