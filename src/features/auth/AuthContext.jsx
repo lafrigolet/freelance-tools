@@ -1,31 +1,49 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth"; // 👈 import signOut
-import { auth } from "../../firebase";
+import { doc, onSnapshot } from "firebase/firestore";
+import { auth, db } from "../../firebase";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [claims, setClaims] = useState({});
+  const [userData, setUserData] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    let unsubscribeUserDoc;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const tokenResult = await firebaseUser.getIdTokenResult(true);
         setUser(firebaseUser);
         setClaims(tokenResult.claims || {});
-        console.log("token claims:", tokenResult.claims);
+
+        // 👇 Subscribe to Firestore user doc
+        const userRef = doc(db, "users", firebaseUser.uid);
+        unsubscribeUserDoc = onSnapshot(userRef, (snap) => {
+          if (snap.exists()) {
+            setUserData(snap.data());
+          } else {
+            setUserData(null);
+          }
+        });
       } else {
         setUser(null);
         setClaims({});
+        setUserData(null);
       }
-      console.log("user claims:", claims);
       setLoading(false);
     });
-    return () => unsubscribe();
-  }, []);
 
+    // Cleanup both listeners
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeUserDoc) unsubscribeUserDoc();
+    };
+  }, []);
+  
   const logout = async () => {
     try {
       await signOut(auth);
@@ -39,7 +57,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, setUser, claims, setClaims, loading, logout }} 
+      value={{ user, setUser, claims, setClaims, userData, setUserData, loading, logout }} 
     >
       {children}
     </AuthContext.Provider>
