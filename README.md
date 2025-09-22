@@ -293,9 +293,12 @@ functions/
 src/
  └─ features/
      └─ stripe/
-         ├─ PaymentMethodsManager.jsx        # React context for Auth
-         └─ stripe.js                        # Stripe helpers functions
- 
+         ├── PaymentMethodsManager.jsx     # Manage saved cards (list, add, delete, set default)
+         ├── OneClickPayButton.jsx         # Pay immediately with default card
+         ├── SavedCardCheckout.jsx         # Choose a saved card at checkout
+         ├── cardBrandLogo.jsx             # Helper to render card logos (Visa, MasterCard, Amex, …)
+         └── stripe.js                     # Frontend API wrappers (stripePromise, call Firebase functions)
+
 public/
  └─ card-logos/
      ├─ visa.svg
@@ -303,6 +306,25 @@ public/
      └─ amex.svg
 
 ```
+
+## Stripe Test Card Numbers
+
+When using Stripe in test mode, you can simulate different scenarios by using the following card numbers:
+
+| Card Type          | Number              | Expiry | CVC | Notes                                |
+|--------------------|---------------------|--------|-----|--------------------------------------|
+| Visa               | 4242 4242 4242 4242 | Any    | Any | Always succeeds                      |
+| Mastercard         | 5555 5555 5555 4444 | Any    | Any | Always succeeds                      |
+| American Express   | 3782 822463 10005   | Any    | Any | 15-digit number, 4-digit CVC         |
+| Declined Card      | 4000 0000 0000 0002 | Any    | Any | Always declined                      |
+| 3D Secure (pass)   | 4000 0025 0000 3155 | Any    | Any | Prompts 3DS authentication, succeeds |
+| 3D Secure (fail)   | 4000 0000 0000 3063 | Any    | Any | Prompts 3DS authentication, fails    |
+| Insufficient Funds | 4000 0000 0000 9995 | Any    | Any | Payment fails                        |
+
+Use any future expiry date and any 3-digit CVC (4 digits for Amex).
+
+More scenarios can be found in the official Stripe docs:  
+https://stripe.com/docs/testing
 
 ## Get Your Stripe API Keys
 
@@ -312,7 +334,7 @@ public/
    - **Publishable key** (starts with `pk_test_...` or `pk_live_...`) → used in frontend.
    - **Secret key** (starts with `sk_test_...` or `sk_live_...`) → used in backend (Firebase Functions).
 
-⚠️ Never expose the secret key in frontend code.
+**WARNING**: Never expose the secret key in frontend code.
 
 ## Store Secrets in Firebase
 
@@ -326,7 +348,7 @@ firebase emulators:start --only functions
 ```
 
 ### Production Mode
-```bash
+```bStore Secrets in production
 firebase functions:secrets:set STRIPE_SECRET --project <your-test-project-id>
 ```
 
@@ -338,3 +360,66 @@ Stripe’s Payment Element automatically shows the methods that are:
 - Bizum → only for Spanish merchants, currency must be eur.
 - Google Pay → requires HTTPS (or localhost), Chrome/Android with Google Pay configured.
 - Apple Pay → requires domain verification in Stripe Dashboard and works only in Safari/iOS/macOS.
+
+## Flow Overview
+### Save Card
+User adds card in PaymentMethodsManager.
+Creates a SetupIntent via functions/setupIntents.js.
+Card is saved to Stripe and linked to customer.
+
+### One-Click Pay
+- Backend (functions/paymentIntents.js) creates a PaymentIntent like:
+
+```js
+await stripe.paymentIntents.create({
+  customer: stripeUID,
+  amount,
+  currency,
+  payment_method: defaultPaymentMethodId,
+  off_session: true, // no UI, immediate charge
+  confirm: true,
+});
+```
+
+- Frontend uses <OneClickPayButton /> to trigger this call.
+- If successful → payment is confirmed.
+- If fails (requires 3D Secure) → handle gracefully.
+
+### Saved Card Checkout
+- Frontend (SavedCardCheckout.jsx) lists saved cards.
+- User selects one.
+- Calls backend to create a PaymentIntent with that payment_method.
+- If extra authentication is required, Stripe.js handles it.
+
+### Sequence Diagram
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant FE as Frontend (React + MUI)
+    participant FB as Firebase Functions
+    participant S as Stripe
+
+    U->>FE: Add new card
+    FE->>FB: createSetupIntent()
+    FB->>S: SetupIntent.create()
+    S-->>FB: client_secret
+    FB-->>FE: client_secret
+    FE->>S: stripe.confirmSetup()
+    S-->>FE: Payment Method saved
+
+    U->>FE: Click "Pay with default card"
+    FE->>FB: oneClickPay(customerId, amount)
+    FB->>S: PaymentIntent.create({ off_session: true })
+    S-->>FB: PaymentIntent
+    FB-->>FE: Payment result
+    FE-->>U: Success / 3D Secure required
+
+    U->>FE: Select saved card at checkout
+    FE->>FB: payWithSavedCard(customerId, paymentMethodId)
+    FB->>S: PaymentIntent.create({ payment_method })
+    S-->>FB: PaymentIntent
+    FB-->>FE: Payment result
+    FE-->>U: Confirmation
+
+```
+

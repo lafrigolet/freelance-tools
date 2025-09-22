@@ -20,7 +20,6 @@ import {
 import StarIcon from "@mui/icons-material/Star";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
-import CreditCardIcon from "@mui/icons-material/CreditCard";
 
 import {
   useStripe,
@@ -37,20 +36,9 @@ import {
   deletePaymentMethod,
 } from "./stripe";
 
-import { useAuthContext } from "../auth/AuthContext";
+import { cardBrandLogo } from './cardBrandLogo';
 
-const cardBrandLogo = (brand) => {
-  switch (brand) {
-  case "visa":
-    return <img src="/card-logos/visa.svg" alt="Visa" style={{ height: 24, marginRight: 12 }} />;
-  case "mastercard":
-    return <img src="/card-logos/mastercard.svg" alt="Mastercard" style={{ height: 24, marginRight: 12 }} />;
-  case "amex":
-    return <img src="/card-logos/amex.svg" alt="Amex" style={{ height: 24, marginRight: 12 }} />;
-  default:
-    return <CreditCardIcon fontSize="small" style={{ height: 24, marginRight: 12 }} />; // fallback to MUI icon
-  }
-};
+import { useAuthContext } from "../auth/AuthContext";
 
 function PaymentMethodsManager() {
   const [paymentMethods, setPaymentMethods] = useState([]);
@@ -59,21 +47,20 @@ function PaymentMethodsManager() {
   const [clientSecret, setClientSecret] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, pmId: null });
   const { userData } = useAuthContext();
-  const stripeUID = userData.stripeUID;
   
   // Load methods
   useEffect(() => {
     (async () => {
-      const res = await listPaymentMethods({ stripeUID });
+      const res = await listPaymentMethods({ stripeUID: userData.stripeUID});
       setPaymentMethods(res.data.paymentMethods.data);
       setDefaultMethod(res.data.defaultPaymentMethod); // ✅ fetch from Stripe
     })();
-  }, [stripeUID]);
+  }, [userData.stripeUID]);
 
   const handleSetDefault = async (pmId) => {
-    await setDefaultPaymentMethod({ stripeUID, paymentMethodId: pmId });
+    await setDefaultPaymentMethod({ stripeUID: userData.stripeUID, paymentMethodId: pmId });
     // ✅ Re-fetch methods so UI is always consistent
-    const res = await listPaymentMethods({ stripeUID });
+    const res = await listPaymentMethods({ stripeUID: userData.stripeUID });
     setPaymentMethods(res.data.paymentMethods.data);
     setDefaultMethod(res.data.defaultPaymentMethod);
   };
@@ -84,7 +71,7 @@ function PaymentMethodsManager() {
   
   // Start add flow
   const startAddPaymentMethod = async () => {
-    const res = await createSetupIntent({ stripeUID });
+    const res = await createSetupIntent({ stripeUID: userData.stripeUID });
     setClientSecret(res.data.clientSecret);
     setAdding(true);
   };
@@ -141,11 +128,11 @@ function PaymentMethodsManager() {
         {adding && clientSecret && (
           <Elements stripe={stripePromise} options={{ clientSecret }}>
             <AddPaymentMethodForm
-              stripeUID={stripeUID}
+              stripeUID={userData.stripeUID}
               onComplete={async () => {
                 setAdding(false);
                 setClientSecret(null);
-                const res = await listPaymentMethods({ stripeUID });
+                const res = await listPaymentMethods({ stripeUID: userData.stripeUID });
                 setPaymentMethods(res.data.paymentMethods.data);
                 setDefaultMethod(res.data.defaultPaymentMethod);
               }}
@@ -168,7 +155,7 @@ function PaymentMethodsManager() {
             color="error"
             onClick={async () => {
               await deletePaymentMethod({ paymentMethodId: deleteDialog.pmId });
-              const res = await listPaymentMethods({ stripeUID });
+              const res = await listPaymentMethods({ stripeUID: userData.stripeUID });
               setPaymentMethods(res.data.paymentMethods.data);
               setDefaultMethod(res.data.defaultPaymentMethod);
               setDeleteDialog({ open: false, pmId: null });

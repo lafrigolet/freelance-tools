@@ -19,6 +19,8 @@ import Navbar from "./features/navbar/Navbar";
 import Stripe from './features/stripe/CheckoutForm2';
 import PaymentMethodsManager from './features/stripe/PaymentMethodsManager';
 import PaymentHistory from './features/stripe/PaymentHistory';
+import SavedCardsCheckout from './features/stripe/SavedCardsCheckout';
+import OneClickPayButton from './features/stripe/OneClickPayButton';
 
 const theme = createTheme({
   palette: {
@@ -114,7 +116,9 @@ function App() {
     ["Profile", "/profile"],
     ["Checkout", "/checkout"],
     ["Payment Methods", "/paymentmethods"],
-    ["Payment History", "/paymenthistory"]
+    ["Payment History", "/paymenthistory"],
+    ["On Click Pay Button", "/oneclickpaybutton"],
+    ["Saved Cards Checkout", "/savedcardscheckout"],
   ];
 
   return (
@@ -131,6 +135,8 @@ function App() {
                 <Route path="/checkout" element={<Stripe />} />
                 <Route path="/paymentmethods" element={<PaymentMethodsManager />} />
                 <Route path="/paymenthistory" element={<PaymentHistory />} />
+                <Route path="/savedcardscheckout" element={<SavedCardsCheckout />} />
+                <Route path="/oneclickpaybutton" element={<OneClickPayButton />} />
                 <Route path="/about" element={<About />} />
               </Routes>
             </ErrorBoundary>
