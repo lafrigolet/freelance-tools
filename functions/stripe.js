@@ -126,3 +126,17 @@ export const deletePaymentMethod = onCall({ secrets: [STRIPE_SECRET] },  async (
   return { deleted };
   }
 );
+
+
+// functions/paymentHistory.js
+export const listPaymentHistory = onCall({ secrets: [STRIPE_SECRET] }, async ({ data, auth }) => {
+  if (!auth) throw new HttpsError("unauthenticated", "Login required");
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET || STRIPE_SECRET.value());
+
+  const paymentIntents = await stripe.paymentIntents.list({
+    customer: data.stripeUID,
+    limit: 5,
+  });
+  return { history: paymentIntents.data };
+});

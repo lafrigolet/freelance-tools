@@ -18,6 +18,7 @@ import Navbar from "./features/navbar/Navbar";
 
 import Stripe from './features/stripe/CheckoutForm2';
 import PaymentMethodsManager from './features/stripe/PaymentMethodsManager';
+import PaymentHistory from './features/stripe/PaymentHistory';
 
 const theme = createTheme({
   palette: {
@@ -107,25 +108,29 @@ function About() {
 }
 
 
-
-
-
-
 function App() {
   const menu = [["Home", "/"], ["About", "/about"]];
+  const userMenu = [
+    ["Profile", "/profile"],
+    ["Checkout", "/checkout"],
+    ["Payment Methods", "/paymentmethods"],
+    ["Payment History", "/paymenthistory"]
+  ];
 
   return (
     <AuthProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Router>
-          <Navbar searchbar={true} menu={menu} />
+          <Navbar searchbar={true} menu={menu} usermenu={userMenu} />
           <main style={{ marginTop: 80, padding: 20 }}>
             <ErrorBoundary FallbackComponent={(error) => (<p>Oops: {error.message}</p>)}>
               <Routes>
                 <Route path="/" element={<Home /> } />
-                <Route path="/stripe" element={<Stripe />} />
+                <Route path="/profile" element={<UserCard /> } />
+                <Route path="/checkout" element={<Stripe />} />
                 <Route path="/paymentmethods" element={<PaymentMethodsManager />} />
+                <Route path="/paymenthistory" element={<PaymentHistory />} />
                 <Route path="/about" element={<About />} />
               </Routes>
             </ErrorBoundary>
