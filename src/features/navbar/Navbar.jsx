@@ -49,7 +49,8 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-export default function Navbar() {
+
+export default function Navbar({ menu, searchbar = false }) {
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleMenuOpen = (event) => {
@@ -80,43 +81,30 @@ export default function Navbar() {
         </Typography>
 
         {/* Center Section: Search */}
-        <Search>
-          <SearchIconWrapper>
-            <SearchIcon />
-          </SearchIconWrapper>
-          <StyledInputBase placeholder="Search…" inputProps={{ "aria-label": "search" }} />
-        </Search>
+        {searchbar ? (
+          <Search>
+            <SearchIconWrapper>
+              <SearchIcon />
+            </SearchIconWrapper>
+            <StyledInputBase placeholder="Search…" inputProps={{ "aria-label": "search" }} />
+          </Search>
+        ):null}
 
         {/* Menu links for desktop */}
         <Box sx={{ display: { xs: "none", md: "flex" } }}>
-          <Typography
-            component={Link}
-            to="/"
-            variant="h6"
-            sx={{ textDecoration: "none", color: "inherit", mr: 2 }}
-          >
-            Home
-          </Typography>
-
-          <Typography
-            component={Link}
-            to="/languageselector"
-            variant="h6"
-            sx={{ textDecoration: "none", color: "inherit", mr: 2 }}
-          >
-            Language
-          </Typography>
-
-          <Typography
-            component={Link}
-            to="/about"
-            variant="h6"
-            sx={{ textDecoration: "none", color: "inherit" }}
-          >
-            About
-          </Typography>
+          {menu.map((item) => (
+            <Typography
+              key={item[1]}
+              component={Link}
+              to={item[1]}
+              variant="h6"
+              sx={{ textDecoration: "none", color: "inherit", mr: 2 }}
+            >
+            {item[0]}
+            </Typography>
+          ))}
         </Box>
-
+        
         {/* Right Section: Profile */}
         <Box sx={{ flexGrow: 1 }} />
         <IconButton edge="end" color="inherit" size="large" >
@@ -125,6 +113,7 @@ export default function Navbar() {
         <LanguageSelector />
       </Toolbar>
 
+      
       {/* Dropdown Menu for mobile */}
       <Menu
         anchorEl={anchorEl}
@@ -139,15 +128,15 @@ export default function Navbar() {
           horizontal: "left",
         }}
       >
-        <MenuItem component={Link} to="/" onClick={handleMenuClose}>
-          Home
-        </MenuItem>
-        <MenuItem component={Link} to="/languageselector" onClick={handleMenuClose}>
-          Language
-        </MenuItem>
-        <MenuItem component={Link} to="/about" onClick={handleMenuClose}>
-          About
-        </MenuItem>
+        {menu.map((item) => (
+          <MenuItem
+            key={item[1]}
+            component={Link}
+            to={item[1]}
+            onClick={handleMenuClose}>
+            {item[0]}
+          </MenuItem>
+        ))}
       </Menu>
     </AppBar>
   );
