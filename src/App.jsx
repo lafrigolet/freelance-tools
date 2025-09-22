@@ -104,16 +104,18 @@ function About() {
 
 function App() {
   const menu = [["Home", "/"], ["About", "/about"]];
+  const userMenu = [["Profile", "/profile"]];
 
   return (
     <AuthProvider>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <Router>
-          <Navbar searchbar={true} menu={menu} />
+          <Navbar searchbar={true} menu={menu} usermenu={userMenu} />
           <main style={{ marginTop: 80, padding: 20 }}>
             <Routes>
               <Route path="/" element={<Home /> } />
+              <Route path="/profile" element={<UserCard /> } />
               <Route path="/about" element={<About />} />
             </Routes>
           </main>

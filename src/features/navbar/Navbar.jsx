@@ -52,7 +52,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-export default function Navbar({ menu, searchbar = false }) {
+export default function Navbar({ menu, usermenu, searchbar = false }) {
   const { user, logout } = useAuthContext();
   const [mobileAnchorEl, setMobileAnchorEl] = useState(null);
   const [userAnchorEl, setUserAnchorEl] = useState(null);
@@ -124,13 +124,16 @@ export default function Navbar({ menu, searchbar = false }) {
               anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
               transformOrigin={{ vertical: "top", horizontal: "right" }}
             >
-              <MenuItem
-                component={Link}
-                to="/profile"
-                onClick={handleUserMenuClose}
-              >
-                Profile
-              </MenuItem>
+              {usermenu.map((item) => (
+                <MenuItem
+                  key={item[1]}
+                  component={Link}
+                  to={item[1]}
+                  onClick={handleUserMenuClose}
+                >
+                  {item[0]}
+                </MenuItem>
+              ))}
               <MenuItem
                 onClick={() => {
                   logout();
