@@ -1,5 +1,4 @@
 # Firebase
-
 This branch handles firebase setup. It is intented to keep all the logic
 for switching between firebase or emulator deploying.
 
@@ -10,20 +9,42 @@ for switching between firebase or emulator deploying.
 4. firebase emulators:start 
 5. npm run dev
 
----
 ## Deploy to Firebase
 
----
 ## Files
+
+```bash
 src/
  ├─ firebase.js
  └─ firebase-emulators.js
+```
+
+## How to handle secrets in emulators
+- Use .secret.local for local overrides
+- In your functions/ folder, create a file .secret.local
+- Add your test keys there (for example, your Stripe test secret).
+```bash
+STRIPE_SECRET=sk_test_123456...
+```
+When you run:
+```bash
+firebase emulators:start
+```
+the emulator will load these secrets for your functions.
+
+## How to handle secrets in production
+- In prod, you still set your secrets using:
+```bash
+firebase functions:secrets:set STRIPE_SECRET
+```
+- This stores them securely in Secret Manager and they’ll only be accessible in deployed functions.
+
 
 ---
 # User Management
 
 ## Files
-
+```bash
 utils/
  └─ setAdmin.js                    # For setting admin role for a given email
 
@@ -41,6 +62,7 @@ src/
          ├─ LoginIconButton.jsx    # This is the starter of a login -> signup dialog flow
          ├─ UserCard.jsx           # A UserCard for helpdesk
          └─ users.js               # Users helpers functions
+```
 
 ## Firestore Collections for Users Feature
 
@@ -102,12 +124,14 @@ Example:
 - Client → listens to magicLinks/{email} until the token appears, then signs in.
 
 ### Flow Diagram
+
+```mermaid
 sequenceDiagram
     participant User
     participant Client
+    participant CloudFunction
     participant Firestore
     participant FirebaseAuth
-    participant CloudFunction
 
     User->>Client: Enter email
     Client->>CloudFunction: request login/signup
@@ -129,7 +153,7 @@ sequenceDiagram
     Client->>FirebaseAuth: signInWithCustomToken(token)
     FirebaseAuth->>Client: returns authenticated user
     Client->>Firestore: delete magicLinks/{email}
-
+```
 
 ## Setting the first admin user 
 User must exist first
@@ -170,7 +194,6 @@ src/
  │       └─ Navbar.jsx    # Top navigation bar
  ├─ assets/               # Static assets (logos, images)
  ├─ App.css               # Global styles
-
 
 ## Features
 
@@ -252,7 +275,6 @@ const theme = createTheme({
   },
 });
 ```
-
 
 ---
 
