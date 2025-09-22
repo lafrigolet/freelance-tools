@@ -20,6 +20,28 @@ src/
  ├─ firebase.js
  └─ firebase-emulators.js
 ```
+
+## How to handle secrets in emulators
+- Use .secret.local for local overrides
+- In your functions/ folder, create a file .secret.local
+- Add your test keys there (for example, your Stripe test secret).
+```bash
+STRIPE_SECRET=sk_test_123456...
+```
+When you run:
+```bash
+firebase emulators:start
+```
+the emulator will load these secrets for your functions.
+
+## How to handle secrets in production
+- In prod, you still set your secrets using:
+```bash
+firebase functions:secrets:set STRIPE_SECRET
+```
+- This stores them securely in Secret Manager and they’ll only be accessible in deployed functions.
+
+
 ---
 # User Management
 
@@ -175,7 +197,6 @@ src/
  ├─ assets/               # Static assets (logos, images)
  ├─ App.css               # Global styles
 
-
 ## Features
 
 ### Navbar
@@ -255,5 +276,4 @@ const theme = createTheme({
     },
   },
 });
-
-
+```
