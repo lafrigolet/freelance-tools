@@ -278,7 +278,7 @@ const theme = createTheme({
 
 ---
 
-# STRIPE
+# STRIPE-CHECKOUT
 
 This project integrates **Stripe Checkout (Payment Element)** with **Firebase Functions**.  
 Follow these steps to configure Stripe in both **test** and **production** environments.
@@ -329,28 +329,33 @@ https://stripe.com/docs/testing
 ## Get Your Stripe API Keys
 
 1. Log into [Stripe Dashboard](https://dashboard.stripe.com/).  
-2. Navigate to **Developers → API keys**.  
+2. In the left-hand sidebar, select **Home**.  
 3. You’ll see:
    - **Publishable key** (starts with `pk_test_...` or `pk_live_...`) → used in frontend.
    - **Secret key** (starts with `sk_test_...` or `sk_live_...`) → used in backend (Firebase Functions).
 
 **WARNING**: Never expose the secret key in frontend code.
 
-## Store Secrets in Firebase
-
-Firebase Functions uses **Secrets Manager** for production keys.  
-Run the following in your project root:
-
-### Test mode
+## Stripe Secrets
+### How to handle secrets in emulators
+- Use .secret.local for local overrides
+- In your functions/ folder, create a file .secret.local
+- Add your test keys there (for example, your Stripe test secret).
 ```bash
-export STRIPE_SECRET=sk_test_12345
-firebase emulators:start --only functions
+STRIPE_SECRET=sk_test_123456...
 ```
+When you run:
+```bash
+firebase emulators:start
+```
+the emulator will load these secrets for your functions.
 
-### Production Mode
-```bStore Secrets in production
-firebase functions:secrets:set STRIPE_SECRET --project <your-test-project-id>
+### How to handle secrets in production
+- In prod, you still set your secrets using:
+```bash
+firebase functions:secrets:set STRIPE_SECRET
 ```
+- This stores them securely in Secret Manager and they’ll only be accessible in deployed functions.
 
 ## Enabling Additional Payment Methods
 Stripe’s Payment Element automatically shows the methods that are:
