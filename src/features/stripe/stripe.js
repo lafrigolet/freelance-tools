@@ -18,13 +18,20 @@ export const stripePromise = loadStripe("pk_test_51S8fp5PcpHhrfr8aox6DGnLvERK8yK
 
 // Firebase Functions Wrapppers ////////////////////////////////////////////////////////
 export const createPaymentIntent     = httpsCallable(functions, "createPaymentIntent");
+export const listPaymentHistory      = httpsCallable(functions, "listPaymentHistory");
+export const oneClickPayment         = httpsCallable(functions, "oneClickPayment");
+export const payWithSavedCard        = httpsCallable(functions, "payWithSavedCard");
+
 export const listPaymentMethods      = httpsCallable(functions, "listPaymentMethods");
 export const setDefaultPaymentMethod = httpsCallable(functions, "setDefaultPaymentMethod");
 export const createSetupIntent       = httpsCallable(functions, "createSetupIntent");
 export const deletePaymentMethod     = httpsCallable(functions, "deletePaymentMethod");
-export const listPaymentHistory      = httpsCallable(functions, "listPaymentHistory");
-export const oneClickPayment         = httpsCallable(functions, "oneClickPayment");
-export const payWithSavedCard        = httpsCallable(functions, "payWithSavedCard");
+
+export const listSubscriptions       = httpsCallable(functions, "listSubscriptions ");
+export const createSubscription      = httpsCallable(functions, "createSubscription");
+export const updateSubscription      = httpsCallable(functions, "updateSubscription");
+export const deleteSubscription      = httpsCallable(functions, "deleteSubscription");
+export const reorderSubscriptions    = httpsCallable(functions, "reorderSubscriptions");
 ///////////////////////////////////////////////////////////////////////////////////////
 
 

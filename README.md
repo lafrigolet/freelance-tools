@@ -428,3 +428,117 @@ sequenceDiagram
 
 ```
 
+
+---
+# STRIPE SUBSCRIPTIONS
+
+## Managing Products and Prices in Stripe
+
+Subscriptions in Stripe are built from Products and Prices.
+
+* A Product is what you are selling (for example: Pro Plan)
+* A Price defines how much and how often (for example: 10 EUR per month or 100 EUR per year)
+
+## Files 
+
+```
+src/
+ ├── admin/
+ │
+ ├── features/
+ │    └── stripe/
+ │         ├── stripe.js                      # Client wrappers for Firebase Functions (list, create, update, etc.)
+ │         └── AdminSubscriptionsManager.jsx  # React MUI component for managing plans
+ │
+ └── functions/                               # Firebase backend functions
+      ├── .secret.local                       # STRIPE-SECRET to testing with emulators
+      ├── index.js                            # Exports all cloud functions
+      └── stripe-subscriptions.js             # Functions for list, create, update, reorder subscriptions
+ 
+```
+
+## Firestore Collections
+
+```
+/subscriptions/{productId}/                    # Stripe product ID
+  active: true                    (boolean)    # Mirrors Stripe product.active
+  amount: "98"                    (string)     # Price in Cents
+  currency: "eur"                 (string)     # eur, usd, gbp 
+  description: "more descript..." (string)     # Multiline allowed field
+  interval: "year"                (string)     # day, week, month, year
+  name: "Secondy"                 (string)     # Human-friendly name
+  order: 3                        (number)     # Custom field for shorting UI
+  priceId: "price_1SAzBbPcpH..."  (string)     # Stripe PriceID linked to the subscription
+```
+
+## Stripe Dashboard Setup Checklist
+
+1. Go to Stripe Dashboard
+   Open [https://dashboard.stripe.com](https://dashboard.stripe.com) and enable Test Mode when testing.
+
+2. Enable Test Mode (if you’re testing)
+   In the top-right corner of the dashboard, you’ll see a toggle: “Viewing test data”.
+   Turn this on if you want to create Products for testing.
+
+3. Create a Product
+
+   * On the left-hand sidebar menu, navigate to Products → Add product
+     You will now see a list of existing Products (if any).
+     On the Products page, click the “+ Add product” button (top-right).
+
+   * Fill in:
+     On the same form, scroll to the Pricing section:
+
+     * Name (example: Pro Plan)
+     * Description (optional)
+     * Image (optional)
+
+4. Add a Price to the Product
+
+   * Under Pricing → Add price:
+
+     * Amount (example: 10)
+     * Currency (example: EUR)
+     * Billing period: Recurring (Monthly or Yearly)
+     * Optional: Trial period (example: 14 days)
+
+5. Save the product and copy the Price ID
+   Click Save product at the bottom.
+   After saving, Stripe will show the new Product’s detail page.
+   Copy the Price ID (looks like price_12345abc...) → this is what you’ll use in your Firebase functions.
+
+   Example:
+
+   ```
+   price_1Q4o93KjNabcdXYZ
+   ```
+
+6. Use the Price ID in your backend
+
+   ```js
+   const subscription = await stripe.subscriptions.create({
+     customer: customerId,
+     items: [{ price: "price_1Q4o93KjNabcdXYZ" }],
+   });
+   ```
+
+7. Multiple Plans
+   Add multiple Prices to the same Product (for example: Monthly and Yearly).
+   Store all relevant price ids in your environment config.
+
+
+### Best Practices
+
+* Always store Price IDs in environment configuration files, never hard-code them.
+  Example:
+
+  ```
+  STRIPE_PRICE_PRO_MONTHLY=price_1Q4o93KjNabcdXYZ
+  STRIPE_PRICE_PRO_YEARLY=price_1Q4o93KjNxyzABC
+  ```
+
+* Keep separate IDs for Test and Production environments.
+  Test Mode IDs will not work in Production.
+
+* Document every created Product and Price in this README for team reference.
+

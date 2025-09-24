@@ -7,6 +7,8 @@ export * from "./users.js";
 
 // Stripe API
 export * from "./stripe.js";
+export * from "./stripe-subscriptions.js";
+
 /**
  * Import function triggers from their respective submodules:
  *
