@@ -32,6 +32,11 @@ export const createSubscription      = httpsCallable(functions, "createSubscript
 export const updateSubscription      = httpsCallable(functions, "updateSubscription");
 export const deleteSubscription      = httpsCallable(functions, "deleteSubscription");
 export const reorderSubscriptions    = httpsCallable(functions, "reorderSubscriptions");
+
+export const createCustomerSubscription = httpsCallable(functions, "createCustomerSubscription");
+export const cancelCustomerSubscription = httpsCallable(functions, "cancelCustomerSubscription");
+export const listUserSubscriptions      = httpsCallable(functions, "listUserSubscriptions");
+
 ///////////////////////////////////////////////////////////////////////////////////////
 
 

@@ -465,6 +465,7 @@ src/
 3. STRIPE_WEBHOOK_SECRET found in the left-hand sidebar, at the botton.  **Stripe Dashboard → Developers → Webhooks**
 
 ## Firestore Collections
+### Subscriptions plans
 ```
 /subscriptions/{productId}/                    # Stripe product ID
   active: true                    (boolean)    # Mirrors Stripe product.active
@@ -476,7 +477,24 @@ src/
   order: 3                        (number)     # Custom field for shorting UI
   priceId: "price_1SAzBbPcpH..."  (string)     # Stripe PriceID linked to the subscription
 ```
+### User subscriptions and invoices
+```
+users/
+  {firebaseUID}/
+    subscriptions/
+      {subscriptionId}/
+        status: "active"
+        current_period_start: ...
+        current_period_end: ...
+        items: [ ... ]
+    invoices/
+      {invoiceId}/
+        amount_due: 500
+        status: "paid"
+        hosted_invoice_url: "https://..."
+        invoice_pdf: "https://..."
 
+```
 ## Stripe Dashboard Setup Checklist
 
 1. Go to Stripe Dashboard

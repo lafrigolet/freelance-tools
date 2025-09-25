@@ -22,6 +22,7 @@ import PaymentHistory from './features/stripe/PaymentHistory';
 import SavedCardsCheckout from './features/stripe/SavedCardsCheckout';
 import OneClickPayButton from './features/stripe/OneClickPayButton';
 import AdminSubscriptionsManager from './features/stripe/AdminSubscriptionsManager';
+import CustomerSubscriptionsManager from './features/stripe/CustomerSubscriptionsManager';
 
 const theme = createTheme({
   palette: {
@@ -120,7 +121,8 @@ function App() {
     ["Payment History", "/paymenthistory"],
     ["On Click Pay Button", "/oneclickpaybutton"],
     ["Saved Cards Checkout", "/savedcardscheckout"],
-    ["Admin Subscriptions Manager", "/adminsubscriptionsmanager"]
+    ["Admin Subscriptions Manager", "/adminsubscriptionsmanager"],
+    ["Customer Subscriptions Manager", "/customersubscriptionsmanager"],
   ];
 
   return (
@@ -140,6 +142,7 @@ function App() {
                 <Route path="/savedcardscheckout" element={<SavedCardsCheckout />} />
                 <Route path="/oneclickpaybutton" element={<OneClickPayButton />} />
                 <Route path="/adminsubscriptionsmanager" element={<AdminSubscriptionsManager />} />
+                <Route path="/customersubscriptionsmanager" element={<CustomerSubscriptionsManager />} />
                 <Route path="/about" element={<About />} />
               </Routes>
             </ErrorBoundary>

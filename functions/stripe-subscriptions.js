@@ -158,3 +158,97 @@ export const reorderSubscriptions = onCall(async ({ data }) => {
 });
 
 
+/**
+ * Create a new subscription for a customer
+ */
+export const createCustomerSubscription = onCall({ secrets: [STRIPE_SECRET] }, async ({ data, auth }) => {
+  if (!auth) throw new HttpsError("unauthenticated", "Login required");
+
+  const { stripeUID, priceId } = data;
+  console.log("stripeUID, priceId ", stripeUID, priceId);
+  if (!stripeUID || !priceId) {
+    throw new HttpsError("invalid-argument", "Missing stripeUID or priceId");
+  }
+
+  const stripe = getStripe();
+
+  try {
+    const subscription = await stripe.subscriptions.create({
+      customer: stripeUID,
+      items: [{ price: priceId }],
+      expand: ["latest_invoice.payment_intent"],
+    });
+
+    // Save subscription under Firestore user
+    const db = getFirestore();
+    await db
+      .collection("users")
+      .doc(auth.uid)
+      .collection("subscriptions")
+      .doc(subscription.id)
+      .set(subscription, { merge: true });
+
+    return { subscription };
+  } catch (err) {
+    console.error("Error creating subscription", err);
+    throw new HttpsError("internal", err.message);
+  }
+});
+
+/**
+ * Cancel a subscription
+ */
+export const cancelCustomerSubscription = onCall({ secrets: [STRIPE_SECRET] }, async ({ data, auth }) => {
+  if (!auth) throw new HttpsError("unauthenticated", "Login required");
+
+  const { subscriptionId } = data;
+  if (!subscriptionId) {
+    throw new HttpsError("invalid-argument", "Missing subscriptionId");
+  }
+
+  const stripe = getStripe();
+
+  try {
+    const canceled = await stripe.subscriptions.cancel(subscriptionId);
+
+    // Update Firestore
+    const db = getFirestore();
+    await db
+      .collection("users")
+      .doc(auth.uid)
+      .collection("subscriptions")
+      .doc(subscriptionId)
+      .set(canceled, { merge: true });
+
+    return { canceled };
+  } catch (err) {
+    console.error("Error canceling subscription", err);
+    throw new HttpsError("internal", err.message);
+  }
+});
+
+/**
+ * List subscriptions for a user from Firestore
+ */
+export const listUserSubscriptions = onCall({ secrets: [STRIPE_SECRET] }, async ({ data, auth }) => {
+  if (!auth) throw new HttpsError("unauthenticated", "Login required");
+
+  const { status } = data || {}; // optional filter
+  const db = getFirestore();
+
+  let query = db
+      .collection("users")
+      .doc(auth.uid)
+      .collection("subscriptions");
+
+  if (status) {
+    query = query.where("status", "==", status);
+  }
+
+  const snap = await query.get();
+  const subscriptions = snap.docs.map((doc) => doc.data());
+
+  console.log("Subscriptions ------------", subscriptions);
+
+  return { subscriptions };
+});
