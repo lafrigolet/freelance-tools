@@ -440,7 +440,6 @@ Subscriptions in Stripe are built from Products and Prices.
 * A Price defines how much and how often (for example: 10 EUR per month or 100 EUR per year)
 
 ## Files 
-
 ```
 src/
  ├── admin/
@@ -451,14 +450,21 @@ src/
  │         └── AdminSubscriptionsManager.jsx  # React MUI component for managing plans
  │
  └── functions/                               # Firebase backend functions
-      ├── .secret.local                       # STRIPE-SECRET to testing with emulators
+      ├── .secret.local                       # STRIPE_SECRET and STRIPE_WEBHOOK_SECRET
       ├── index.js                            # Exports all cloud functions
-      └── stripe-subscriptions.js             # Functions for list, create, update, reorder subscriptions
+      ├── stripe-subscriptions.js             # Functions for list, create, update, reorder subscriptions
+      └── stripe-webhooks.js                  # Functions for list, create, update, reorder subscriptions
  
 ```
 
-## Firestore Collections
+## Stripe Secrets
+1. Log into [Stripe Dashboard](https://dashboard.stripe.com/).  
+2. STRIPE_SECRET found in the left-hand sidebar, select **Home**.  
+   - **Publishable key** (starts with `pk_test_...` or `pk_live_...`) → used in frontend.
+   - **Secret key** (starts with `sk_test_...` or `sk_live_...`) → used in backend (Firebase Functions).
+3. STRIPE_WEBHOOK_SECRET found in the left-hand sidebar, at the botton.  **Stripe Dashboard → Developers → Webhooks**
 
+## Firestore Collections
 ```
 /subscriptions/{productId}/                    # Stripe product ID
   active: true                    (boolean)    # Mirrors Stripe product.active
@@ -542,3 +548,34 @@ src/
 
 * Document every created Product and Price in this README for team reference.
 
+## Webhooks
+Webhooks are needed because not all subscription updates come from your app (e.g. trial ending, failed payments, canceled in the Stripe Dashboard). Stripe will notify you, and you must keep Firestore in sync.
+
+### Stripe Webhook Setup Test
+1. Install the Stripe CLI
+```
+curl -fsSL https://cli.stripe.com/install.sh | sudo bash
+```
+2. Verify Installation
+```
+stripe --version
+```
+3. Login CLI
+Once installed, log in with your Stripe account so the CLI can forward events:
+```
+stripe login
+```
+4. Init forwarding
+```
+stripe listen --forward-to localhost:5001/<project>/us-central1/stripeWebhook
+```
+
+### Stripe Webhook Setup Production
+1. Set the webhook URL as https://<region>-<project>.cloudfunctions.net/stripeWebhook
+
+### Example Flow
+- A customer subscribes to a plan (in test mode).
+- Stripe creates a **customer.subscription.created event**.
+- Stripe sends that event to the CLI.
+- The CLI forwards it to your local **Firebase function stripeWebhook**.
+- Your code logs it and updates Firestore.
