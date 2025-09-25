@@ -121,15 +121,12 @@ export default function AdminSubscriptionsManager() {
               {plans.map((sub, index) => (
                 <Draggable key={sub.id} draggableId={sub.id} index={index}>
                   {(provided) => (
-                    <Grid
-                      item
-                      xs={12}
-                      sm={6}
-                      md={4}
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                    >
+                      <Grid
+                        size={{ xs: 12, sm: 6, md: 4 }}
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                      >
                       <Card sx={{ borderRadius: 3, p: 2, boxShadow: 3 }}>
                         <CardContent>
                           <EditableText
