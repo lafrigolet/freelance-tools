@@ -4,19 +4,21 @@ import {
   Button,
   Card,
   CardContent,
-  Typography,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  IconButton,
   Chip,
+  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
+  IconButton,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  Typography,
 } from "@mui/material";
+
 import StarIcon from "@mui/icons-material/Star";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -40,12 +42,16 @@ import { cardBrandLogo } from './cardBrandLogo';
 
 import { useAuthContext } from "../auth/AuthContext";
 
-function PaymentMethodsManager() {
+import AddPaymentMethod from './AddPaymentMethod';
+
+function PaymentMethodsManager({ amount, currency = "eur" }) {
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [defaultMethod, setDefaultMethod] = useState(null);
-  const [adding, setAdding] = useState(false);
-  const [clientSecret, setClientSecret] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, pmId: null });
+  const [loading, setLoading] = useState(false);
+  const [loadingPayId, setLoadingPayId] = useState(null);
+  const [loadingDefaultId, setLoadingDefaultId] = useState(null);
+  const [loadingDelete, setLoadingDelete] = useState(null);
   const { userData } = useAuthContext();
   
   // Load methods
@@ -57,28 +63,44 @@ function PaymentMethodsManager() {
     })();
   }, [userData.stripeUID]);
 
+
+  const handlePay = async (pmId) => {
+    setLoadingPayId(pmId);
+    try {
+      await payWithSavedCard({
+        customerId: userData.stripeUID,
+        paymentMethodId: pmId,
+        amount,
+        currency,
+      });
+      setMessage("Payment successful!");
+    } catch (err) {
+      setMessage(`Error: ${err.message}`);
+    } finally {
+      setLoadingPayId(null);
+    }
+  };
+
   const handleSetDefault = async (pmId) => {
-    await setDefaultPaymentMethod({ stripeUID: userData.stripeUID, paymentMethodId: pmId });
-    // ✅ Re-fetch methods so UI is always consistent
-    const res = await listPaymentMethods({ stripeUID: userData.stripeUID });
-    setPaymentMethods(res.data.paymentMethods.data);
-    setDefaultMethod(res.data.defaultPaymentMethod);
+    setLoadingDefaultId(pmId);
+    try {
+      await setDefaultPaymentMethod({ stripeUID: userData.stripeUID, paymentMethodId: pmId });
+      // ✅ Re-fetch methods so UI is always consistent
+      const res = await listPaymentMethods({ stripeUID: userData.stripeUID });
+      setPaymentMethods(res.data.paymentMethods.data);
+      setDefaultMethod(res.data.defaultPaymentMethod);
+    } finally {
+      setLoadingDefaultId(null);
+    }
   };
 
   const handleDelete = async (pmId) => {
     setDeleteDialog({ open: true, pmId });
   };
   
-  // Start add flow
-  const startAddPaymentMethod = async () => {
-    const res = await createSetupIntent({ stripeUID: userData.stripeUID });
-    setClientSecret(res.data.clientSecret);
-    setAdding(true);
-  };
-
   return (
     <>
-      <Card sx={{ maxWidth: 600, minWidth: 400, mx: "auto", mt: 4, borderRadius: 2, padding: 2}}>
+      <Card sx={{ maxWidth: 600, minWidth: 500, mx: "auto", mt: 4, borderRadius: 2, padding: 2}}>
         <Typography variant="h5" gutterBottom>
           My Payment Methods
         </Typography>
@@ -100,9 +122,14 @@ function PaymentMethodsManager() {
                     aria-label="make default"
                     onClick={() => handleSetDefault(pm.id)}
                   >
-                    <StarIcon />
+                    {loadingDefaultId === pm.id ? (
+                      <CircularProgress size={20} />
+                    ) : (
+                      <StarIcon />
+                    )}
                   </IconButton>
                 )}
+
                 <IconButton
                   edge="end"
                   aria-label="delete"
@@ -110,35 +137,40 @@ function PaymentMethodsManager() {
                 >
                   <DeleteIcon />
                 </IconButton>
+
+                { amount ? (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    disabled={loadingPayId === pm.id}
+                    onClick={() => handlePay(pm.id)}
+                    sx={{ ml: 1 }}
+                  >
+                    {loadingPayId === pm.id ? (
+                      <CircularProgress size={20} />
+                    ) : (
+                      "Pay"
+                    )}
+                  </Button>
+                ) : null }
               </ListItemSecondaryAction>
             </ListItem>
           ))}
         </List>
 
-        <Box mt={2}>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={startAddPaymentMethod}
-          >
-            Add Payment Method
-          </Button>
-        </Box>
-
-        {adding && clientSecret && (
-          <Elements stripe={stripePromise} options={{ clientSecret }}>
-            <AddPaymentMethodForm
-              stripeUID={userData.stripeUID}
-              onComplete={async () => {
-                setAdding(false);
-                setClientSecret(null);
+        <AddPaymentMethod
+          onComplete={
+            async () => {
+              try {
                 const res = await listPaymentMethods({ stripeUID: userData.stripeUID });
                 setPaymentMethods(res.data.paymentMethods.data);
                 setDefaultMethod(res.data.defaultPaymentMethod);
-              }}
-            />
-          </Elements>
-        )}
+              } finally {
+                setLoading(false);
+              }
+            }
+          }
+        />
       </Card>
 
       {/* Dialog component */}
@@ -151,79 +183,30 @@ function PaymentMethodsManager() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialog({ open: false, pmId: null })}>Cancel</Button>
-          <Button
-            color="error"
-            onClick={async () => {
-              await deletePaymentMethod({ paymentMethodId: deleteDialog.pmId });
-              const res = await listPaymentMethods({ stripeUID: userData.stripeUID });
-              setPaymentMethods(res.data.paymentMethods.data);
-              setDefaultMethod(res.data.defaultPaymentMethod);
-              setDeleteDialog({ open: false, pmId: null });
-            }}
-          >
-            Delete
-          </Button>
+          {loadingDelete ? (
+            <CircularProgress size={20} />
+          ) : (
+            <Button
+              color="error"
+              onClick={async () => {
+                setLoadingDelete(true);
+                try {
+                  await deletePaymentMethod({ paymentMethodId: deleteDialog.pmId });
+                  const res = await listPaymentMethods({ stripeUID: userData.stripeUID });
+                  setPaymentMethods(res.data.paymentMethods.data);
+                  setDefaultMethod(res.data.defaultPaymentMethod);
+                } finally {
+                  setDeleteDialog({ open: false, pmId: null });
+                  setLoadingDelete(false);
+                }
+              }}
+            >
+              Delete
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </>
-  );
-}
-
-// Sub-component for adding
-function AddPaymentMethodForm({ stripeUID, onComplete }) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [clientSecret, setClientSecret] = React.useState(null);
-
-  // Get client_secret from Firebase function
-  useEffect(() => {
-    async function fetchSetupIntent() {
-      const res = await createSetupIntent({ stripeUID });
-      setClientSecret(res.data.clientSecret);
-    }
-    fetchSetupIntent();
-  }, [stripeUID]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!stripe || !elements || !clientSecret) return;
-
-    // ✅ First validate the PaymentElement inputs
-    const { error: submitError } = await elements.submit();
-    if (submitError) {
-      console.error("Validation error:", submitError.message);
-      return;
-    }
-
-    // ✅ Then confirm setup
-    const { error, setupIntent } = await stripe.confirmSetup({
-      elements,
-      clientSecret,
-      redirect: "if_required", // avoids full page redirect unless needed
-    });
-
-    if (error) {
-      console.error("Confirmation error:", error.message);
-    } else {
-      console.log("Saved payment method:", setupIntent.payment_method);
-      onComplete?.();
-    }
-  };
-
-  return (
-    <Card sx={{ mt: 3 }}>
-      <CardContent>
-        <Typography variant="h6">Add New Payment Method</Typography>
-        <form onSubmit={handleSubmit}>
-          <Box mt={2} mb={2}>
-            {clientSecret && <PaymentElement />}
-          </Box>
-          <Button type="submit" variant="contained" disabled={!stripe || !clientSecret}>
-            Save
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
   );
 }
 

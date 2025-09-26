@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import {
+  Box,
   Card,
   CardContent,
   Typography,
@@ -13,6 +14,8 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
+
+import AddIcon from "@mui/icons-material/Add";
 
 import {
   listPaymentMethods,
@@ -36,12 +39,16 @@ function getCardLogo(brand) {
   }
 }
 
+import AddPaymentMethod from './AddPaymentMethod';
+
 export default function SavedCardsCheckout({ amount, currency = "eur" }) {
   const { userData } = useAuthContext();
   const [cards, setCards] = useState([]);
   const [loadingId, setLoadingId] = useState(null);
   const [message, setMessage] = useState(null);
-
+  const [clientSecret, setClientSecret] = useState(null);
+  const [adding, setAdding] = useState(false);
+  
   useEffect(() => {
     (async () => {
       const res = await listPaymentMethods({ stripeUID: userData.stripeUID });
@@ -66,8 +73,15 @@ export default function SavedCardsCheckout({ amount, currency = "eur" }) {
     }
   };
 
+  // Start add flow
+  const startAddPaymentMethod = async () => {
+    const res = await createSetupIntent({ stripeUID: userData.stripeUID });
+    setClientSecret(res.data.clientSecret);
+    setAdding(true);
+  };
+
   return (
-    <Card sx={{ maxWidth: 600, minWidth:400, mx: "auto", mt: 4 }}>
+    <Card sx={{ maxWidth: 600, minWidth: 400, mx: "auto", mt: 4, borderRadius: 2, padding: 2}}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
           Pay with a Saved Card
@@ -98,15 +112,18 @@ export default function SavedCardsCheckout({ amount, currency = "eur" }) {
           ))}
         </List>
       </CardContent>
+      <AddPaymentMethod />
       <Snackbar
         open={!!message}
         autoHideDuration={4000}
         onClose={() => setMessage(null)}
+        onClick={startAddPaymentMethod}
       >
         <Alert severity={message?.startsWith("Error") ? "error" : "success"}>
           {message}
         </Alert>
       </Snackbar>
+
     </Card>
   );
 }
