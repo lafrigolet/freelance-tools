@@ -495,6 +495,59 @@ users/
         invoice_pdf: "https://..."
 
 ```
+## Subscribe Flow
+```mermaid
+sequenceDiagram
+    participant U as User (React app)
+    participant C as Client (Browser)
+    participant F as Firebase Function (createCustomerSubscription)
+    participant S as Stripe
+    participant W as Webhook (Firebase Function)
+    participant DB as Firestore
+
+    U->>C: Selects subscription plan<br/>and payment method (pmId)
+    C->>F: Call createCustomerSubscription(priceId, customerId, pmId)
+    F->>S: Create subscription<br/>default_payment_method=pmId<br/>payment_behavior=default_incomplete
+    S-->>F: Return subscription + PaymentIntent (if required)
+    F-->>C: Send back subscriptionId + client_secret (nullable)
+
+    alt PaymentIntent requires confirmation (SCA)
+        C->>S: stripe.confirmCardPayment(client_secret)
+        S-->>C: Confirm payment result (success or error)
+    else No confirmation needed
+        S-->>C: Payment succeeds automatically
+    end
+
+    S-->>W: Webhook event<br/>(invoice.payment_succeeded, subscription.created/updated)
+    W->>DB: Update user subscription record
+    DB-->>W: Acknowledge
+
+    C->>U: Update UI (e.g., "Subscription Active")
+```
+
+## Cancel Subscription Flow
+```mermaid
+sequenceDiagram
+    participant U as User (React app)
+    participant C as Client (Browser)
+    participant F as Firebase Function (cancelSubscription)
+    participant S as Stripe
+    participant W as Webhook (Firebase Function)
+    participant DB as Firestore
+
+    U->>C: Clicks "Cancel Subscription"
+    C->>F: Call cancelCustomerSubscription(subscriptionId)
+    F->>S: stripe.subscriptions.cancel(subscriptionId)
+    S-->>F: Return canceled subscription object
+    F-->>C: Confirm cancellation request received
+
+    S-->>W: Webhook event (customer.subscription.deleted)
+    W->>DB: Update subscription status = "canceled"
+    DB-->>W: Acknowledge
+
+    C->>U: UI updates (e.g., "Subscription canceled")
+```
+
 ## Stripe Dashboard Setup Checklist
 
 1. Go to Stripe Dashboard

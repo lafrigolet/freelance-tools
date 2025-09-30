@@ -51,17 +51,21 @@ export default function AdminSubscriptionsManager() {
 
   // Add a new subscription
   const handleAdd = async () => {
-    const plan = {
-      name: "name",
-      description: "description",
-      amount: 10,
-      currency: "eur",
-      interval: "month",
-      order: plans.length,
-    };
+    try {
+      const plan = {
+        name: "name",
+        description: "description",
+        amount: 10,
+        currency: "eur",
+        interval: "month",
+        order: Date.now,
+      };
 
-    await createSubscription(plan);
-    await fetchPlans();
+      await createSubscription(plan);
+      await fetchPlans();
+    } catch (error) {
+      console.log("Error: ", error.message);
+    }
   };
   
   const handleAddbak = async () => {
@@ -95,7 +99,7 @@ export default function AdminSubscriptionsManager() {
   if (loading) return <Typography>Loading plans...</Typography>;
 
   return (
-    <Box maxWidth={800} mx="auto" mt={4}>
+    <Box minWidth={900} mx="auto" mt={4}>
       <Typography variant="h4" gutterBottom>
         Manage Subscription Plans
       </Typography>

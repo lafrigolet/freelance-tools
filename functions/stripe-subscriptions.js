@@ -30,6 +30,7 @@ export const createSubscription = onCall({ secrets: [STRIPE_SECRET] }, async ({ 
   const stripe = getStripe();
   const { name, description, amount, currency, interval, order } = data;
 
+  console.log("{ name, description, amount, currency, interval, order }", name, description, amount, currency, interval, order );
   if (!name || !description || !amount || !currency || !interval || !order)
     throw new HttpsError("invalid-argument", "Missing required fields");
 
@@ -159,41 +160,57 @@ export const reorderSubscriptions = onCall(async ({ data }) => {
 
 
 /**
- * Create a new subscription for a customer
+ * Create a new subscription for a customer using a specific payment method
+ * (assumes pmId is already attached to the customer)
  */
-export const createCustomerSubscription = onCall({ secrets: [STRIPE_SECRET] }, async ({ data, auth }) => {
-  if (!auth) throw new HttpsError("unauthenticated", "Login required");
+export const createCustomerSubscription = onCall(
+  { secrets: [STRIPE_SECRET] },
+  async ({ data, auth }) => {
+    if (!auth) throw new HttpsError("unauthenticated", "Login required");
 
-  const { stripeUID, priceId } = data;
-  console.log("stripeUID, priceId ", stripeUID, priceId);
-  if (!stripeUID || !priceId) {
-    throw new HttpsError("invalid-argument", "Missing stripeUID or priceId");
+    const { stripeUID, priceId, pmId } = data;
+    console.log(" stripeUID, priceId, pmId ", stripeUID, priceId, pmId );
+    if (!stripeUID || !priceId || !pmId) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Missing stripeUID, priceId, or pmId"
+      );
+    }
+
+    const stripe = getStripe();
+
+    try {
+      // Create subscription and pin this pmId
+      const subscription = await stripe.subscriptions.create({
+        customer: stripeUID,
+        items: [{ price: priceId }],
+        default_payment_method: pmId,          // 👈 pinned for this subscription only
+        payment_behavior: "default_incomplete",
+        expand: ["latest_invoice.payment_intent"],
+      });
+
+      const paymentIntent = subscription.latest_invoice?.payment_intent;
+
+      // Save subscription in Firestore (optional)
+      const db = getFirestore();
+      await db
+        .collection("users")
+        .doc(auth.uid)
+        .collection("subscriptions")
+        .doc(subscription.id)
+        .set(subscription, { merge: true });
+
+      return {
+        subscriptionId: subscription.id,
+        clientSecret: paymentIntent?.client_secret || null, // if immediate confirmation needed
+      };
+    } catch (err) {
+      console.error("Error creating subscription", err);
+      throw new HttpsError("internal", err.message);
+    }
   }
+);
 
-  const stripe = getStripe();
-
-  try {
-    const subscription = await stripe.subscriptions.create({
-      customer: stripeUID,
-      items: [{ price: priceId }],
-      expand: ["latest_invoice.payment_intent"],
-    });
-
-    // Save subscription under Firestore user
-    const db = getFirestore();
-    await db
-      .collection("users")
-      .doc(auth.uid)
-      .collection("subscriptions")
-      .doc(subscription.id)
-      .set(subscription, { merge: true });
-
-    return { subscription };
-  } catch (err) {
-    console.error("Error creating subscription", err);
-    throw new HttpsError("internal", err.message);
-  }
-});
 
 /**
  * Cancel a subscription

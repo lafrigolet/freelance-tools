@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Box,
   Button,
   Card,
@@ -26,16 +27,15 @@ import AddIcon from "@mui/icons-material/Add";
 import {
   useStripe,
   useElements,
-  PaymentElement,
-  Elements
+  Elements,
 } from "@stripe/react-stripe-js";
 
 import {
-  stripePromise,
   listPaymentMethods,
   setDefaultPaymentMethod,
-  createSetupIntent,
   deletePaymentMethod,
+  createCustomerSubscription,
+  stripePromise,
 } from "./stripe";
 
 import { cardBrandLogo } from './cardBrandLogo';
@@ -44,7 +44,7 @@ import { useAuthContext } from "../auth/AuthContext";
 
 import AddPaymentMethod from './AddPaymentMethod';
 
-function PaymentMethodsManager({ amount, currency = "eur" }) {
+function PaymentMethodsManagerElement({ priceId }) {
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [defaultMethod, setDefaultMethod] = useState(null);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, pmId: null });
@@ -53,13 +53,23 @@ function PaymentMethodsManager({ amount, currency = "eur" }) {
   const [loadingDefaultId, setLoadingDefaultId] = useState(null);
   const [loadingDelete, setLoadingDelete] = useState(null);
   const { userData } = useAuthContext();
+  const [message, setMessage] = useState();
+  const [severity, setSeverity] = useState("success");
+  const elements = useElements();
+  const stripe = useStripe();
   
   // Load methods
   useEffect(() => {
     (async () => {
-      const res = await listPaymentMethods({ stripeUID: userData.stripeUID});
-      setPaymentMethods(res.data.paymentMethods.data);
-      setDefaultMethod(res.data.defaultPaymentMethod); // ✅ fetch from Stripe
+      console.log("stripeUID ", userData.stripeUID);
+      try {
+        if (!userData.stripeUID) return;
+        const res = await listPaymentMethods({ stripeUID: userData.stripeUID});
+        setPaymentMethods(res.data.paymentMethods.data);
+        setDefaultMethod(res.data.defaultPaymentMethod); // ✅ fetch from Stripe
+      } catch (error) {
+        console.log("Error ", error.message);
+      }
     })();
   }, [userData.stripeUID]);
 
@@ -67,15 +77,22 @@ function PaymentMethodsManager({ amount, currency = "eur" }) {
   const handlePay = async (pmId) => {
     setLoadingPayId(pmId);
     try {
-      await payWithSavedCard({
-        customerId: userData.stripeUID,
-        paymentMethodId: pmId,
-        amount,
-        currency,
-      });
-      setMessage("Payment successful!");
+      if (!stripe || !elements) throw new Error("Internal Error, reload and try again");
+      const res = await createCustomerSubscription( {  stripeUID: userData.stripeUID, priceId, pmId });
+
+      const { error, paymentIntent } = await stripe.confirmCardPayment(res.data?.clientSecret);
+
+      if (error) {
+        throw new Error(error.message);
+      } else if (paymentIntent.status === "succeeded") {
+        setMessage("Payment succeeded, subscription active!");
+        setSeverity("success");
+        console.log("Payment succeeded, subscription active!");
+      }
+
     } catch (err) {
       setMessage(`Error: ${err.message}`);
+      setSeverity("error");
     } finally {
       setLoadingPayId(null);
     }
@@ -97,6 +114,17 @@ function PaymentMethodsManager({ amount, currency = "eur" }) {
   const handleDelete = async (pmId) => {
     setDeleteDialog({ open: true, pmId });
   };
+
+  useEffect(() => {
+    console.log("priceId changed");
+    if (!priceId) return;
+
+    // Do whatever needs to happen when clientSecret changes
+    console.log("priceId changed:", priceId);
+
+    // maybe initialize SDK, fetch data, reset state, etc.
+  }, [priceId]);
+  
   
   return (
     <>
@@ -104,7 +132,7 @@ function PaymentMethodsManager({ amount, currency = "eur" }) {
         <Typography variant="h5" gutterBottom>
           My Payment Methods
         </Typography>
-
+        {message && <Alert severity={severity} role="status">{message}</Alert>}
         <List>
           {paymentMethods.map((pm) => (
             <ListItem key={pm.id}>
@@ -138,21 +166,22 @@ function PaymentMethodsManager({ amount, currency = "eur" }) {
                   <DeleteIcon />
                 </IconButton>
 
-                { amount ? (
-                  <Button
-                    variant="contained"
-                    size="small"
-                    disabled={loadingPayId === pm.id}
-                    onClick={() => handlePay(pm.id)}
-                    sx={{ ml: 1 }}
-                  >
-                    {loadingPayId === pm.id ? (
-                      <CircularProgress size={20} />
-                    ) : (
-                      "Pay"
-                    )}
-                  </Button>
-                ) : null }
+                {priceId && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  disabled={loadingPayId === pm.id}
+                  onClick={() => handlePay(pm.id)}
+                  sx={{ ml: 1 }}
+                >
+                  {loadingPayId === pm.id ? (
+                    <CircularProgress size={20} />
+                  ) : (
+                    "Subscribe"
+                  )}
+                </Button>
+                )}
+                
               </ListItemSecondaryAction>
             </ListItem>
           ))}
@@ -210,4 +239,11 @@ function PaymentMethodsManager({ amount, currency = "eur" }) {
   );
 }
 
-export default PaymentMethodsManager;
+export default function PaymentMethodsManager({ priceId }) {
+  return (
+    <Elements stripe={stripePromise} >
+      <PaymentMethodsManagerElement priceId={priceId} />
+    </Elements>
+  );
+}
+
