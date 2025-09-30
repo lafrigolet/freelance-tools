@@ -15,6 +15,8 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./features/navbar/Navbar";
 
+import AddressCard from './features/addresses/AddressCard';
+
 const theme = createTheme({
   palette: {
     mode: "light", // or "dark"
@@ -104,7 +106,10 @@ function About() {
 
 function App() {
   const menu = [["Home", "/"], ["About", "/about"]];
-  const userMenu = [["Profile", "/profile"]];
+  const userMenu = [
+    ["Profile", "/profile"],
+    ["Addresses", "/addresses"],
+  ];
 
   return (
     <AuthProvider>
@@ -116,6 +121,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home /> } />
               <Route path="/profile" element={<UserCard /> } />
+              <Route path="/addresses" element={<AddressCard /> } />
               <Route path="/about" element={<About />} />
             </Routes>
           </main>

@@ -5,6 +5,8 @@ initializeApp();
 // Users API 
 export * from "./users.js";
 
+// Adresses API
+export * from "./addresses.js";
 
 /**
  * Import function triggers from their respective submodules:

@@ -275,3 +275,41 @@ const theme = createTheme({
   },
 });
 ```
+
+## Addresses
+Functionality to manage user addresses.
+
+### Files
+```
+project-root
+├── functions/                          # Firebase backend
+│   ├── index.js                        # Exports all cloud functions
+│   └── addresses.js                    # onCall functions for addresses
+│       ├── getAddresses                # return list of addresses
+│       ├── addAddress                  # create new address
+│       ├── updateAddress               # update existing address
+│       ├── deleteAddress               # remove an address
+│       └── setDefaultAddress           # mark one address as default
+│
+├── src/                                # React frontend
+│   └── features/
+│       └── addresses 
+│           ├── AddressCard.js          # Material UI card UI for listing & editing addresses
+│           └── addresses.js            # Client wrappers calling the onCall firebase functions
+│
+└── README.md                           # Documentation (this tree + details)
+```
+
+### Firebase Collections
+```
+Firestore database
+└── users (collection)
+    └── {uid} (document, per authenticated user)
+        └── addresses (subcollection)
+            └── {addressId} (document, per address)
+                 ├── street: string
+                 ├── city: string
+                 ├── zip: string
+                 ├── country: string
+                 └── isDefault: boolean
+```
