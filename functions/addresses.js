@@ -5,26 +5,24 @@ import { getAuth } from "firebase-admin/auth";
 
 
 // 🔹 Obtener direcciones de un usuario autenticado
-export const getAddresses = onCall(async ({ auth }) => {
+export const getAddresses = onCall(async ({ auth, data }) => {
   const db = getFirestore();
-  const uid = auth?.uid;
 
-  console.log("uid ", uid);
-  if (!uid) throw new Error("Not authenticated");
+  if (!auth?.uid) throw new Error("Not authenticated");
+  const uid = auth?.token?.role === "helpdesk" && data.uid ? data.uid : auth?.uid;
 
   const snap = await db.collection("users").doc(uid).collection("addresses").get();
   const addresses = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-  console.log("Addresses", addresses);
+
   return { addresses: addresses };
 });
 
 // 🔹 Añadir dirección
 export const addAddress = onCall(async ({ auth, data }) => {
   const db = getFirestore();
-  const uid = auth?.uid;
 
-  console.log("data", data);
-  if (!uid) throw new Error("Not authenticated");
+  if (!auth?.uid) throw new Error("Not authenticated");
+  const uid = auth?.token?.role === "helpdesk" && data.uid ? data.uid : auth?.uid;
 
   const ref = await db.collection("users").doc(uid).collection("addresses").add({
     ...data,
@@ -36,20 +34,22 @@ export const addAddress = onCall(async ({ auth, data }) => {
 // 🔹 Actualizar dirección
 export const updateAddress = onCall(async ({ auth, data }) => {
   const db = getFirestore();
-  const uid = auth?.uid;
-  if (!uid) throw new Error("Not authenticated");
+
+  if (!auth?.uid) throw new Error("Not authenticated");
+  const uid = auth?.token?.role === "helpdesk" && data.uid ? data.uid : auth?.uid;
 
   const { addressId, address } = data;
-  console.log("updateAddress ", addressId, address);
   await db.collection("users").doc(uid).collection("addresses").doc(addressId).update(address);
+  
   return { success: true };
 });
 
 // 🔹 Borrar dirección
 export const deleteAddress = onCall(async ({ auth, data }) => {
   const db = getFirestore();
-  const uid = auth?.uid;
-  if (!uid) throw new Error("Not authenticated");
+
+  if (!auth?.uid) throw new Error("Not authenticated");
+  const uid = auth?.token?.role === "helpdesk" && data.uid ? data.uid : auth?.uid;
 
   const { addressId } = data;
   await db.collection("users").doc(uid).collection("addresses").doc(addressId).delete();
@@ -57,12 +57,13 @@ export const deleteAddress = onCall(async ({ auth, data }) => {
 });
 
 // 🔹 Poner dirección como default
-export const setDefaultAddress = onCall(async (request) => {
+export const setDefaultAddress = onCall(async ({ auth, data }) => {
   const db = getFirestore();
-  const uid = request.auth?.uid;
-  if (!uid) throw new Error("Not authenticated");
 
-  const { addressId } = request.data;
+  if (!auth?.uid) throw new Error("Not authenticated");
+  const uid = auth?.token?.role === "helpdesk" && data.uid ? data.uid : auth?.uid;
+
+  const { addressId } = data;
   const ref = db.collection("users").doc(uid).collection("addresses");
   const snap = await ref.get();
 

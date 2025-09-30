@@ -30,7 +30,7 @@ import {
 
 import { useAuthContext } from "../auth/AuthContext";
 
-export default function AddressCard() {
+export default function AddressCard({ uid }) {
   const [addresses, setAddresses] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [formValues, setFormValues] = useState({});
@@ -39,7 +39,7 @@ export default function AddressCard() {
 
   const loadAddresses = async () => {
     if (!userData.uid) return;
-    const res = await getAddresses();
+    const res = await getAddresses({uid});
     setAddresses(res.data.addresses || []);
   };
 
@@ -57,11 +57,11 @@ export default function AddressCard() {
   const handleSave = async (id) => {
     if (id === "new") {
       // Guardar la dirección nueva
-      await addAddress(formValues[id]);
+      await addAddress(formValues[id], uid );
       setNewAddress(null);
     } else {
       // Actualizar una dirección existente
-      await updateAddress({ addressId: id, address: formValues[id] });
+      await updateAddress({ addressId: id, address: formValues[id], uid });
       setEditingId(null);
     }
     setFormValues({});
@@ -69,12 +69,12 @@ export default function AddressCard() {
   };
 
   const handleDelete = async (id) => {
-    await deleteAddress({ addressId: id });
+    await deleteAddress({ addressId: id, uid });
     loadAddresses();
   };
 
   const handleSetDefault = async (id) => {
-    await setDefaultAddress({ addressId: id });
+    await setDefaultAddress({ addressId: id, uid });
     loadAddresses();
   };
 
