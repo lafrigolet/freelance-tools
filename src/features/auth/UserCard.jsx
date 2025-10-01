@@ -1,15 +1,25 @@
 import { useEffect, useState } from "react";
+
 import {
+  Alert,
+  Button,
   Card,
   CardContent,
   CardActions,
+  CircularProgress,
+  Grid,
+  IconButton,
+  Stack,
+  Switch,
   Typography,
   TextField,
-  Button,
-  CircularProgress,
-  Alert,
-  Grid,
 } from "@mui/material";
+
+import {
+  Delete,
+  Save,
+} from "@mui/icons-material";
+
 import {
   getUserData,
   setUserData,
@@ -25,6 +35,7 @@ export default function UserCard({ uid }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [info, setInfo] = useState(null);
+  const [isEnabled, setIsEnabled] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -33,12 +44,13 @@ export default function UserCard({ uid }) {
       setInfo(null);
       try {
         const res = await getUserData({ uid });
-        const { exists, data, claims } = res.data;
+        const { exists, data, claims, disabled } = res.data;
         if (!exists) {
           setError("User not found");
         } else {
           setUser(data);
           setClaims(claims);
+          setIsEnabled(!disabled);
         }
       } catch (err) {
         console.error(err);
@@ -101,6 +113,7 @@ export default function UserCard({ uid }) {
     try {
       await disableUser({ uid });
       setInfo("User updated successfully ✅");
+      setIsEnabled(false);
     } catch (err) {
       console.error(err);
       setError("Failed to save user ❌");
@@ -116,6 +129,7 @@ export default function UserCard({ uid }) {
     try {
       await enableUser({ uid });
       setInfo("User updated successfully ✅");
+      setIsEnabled(true);
     } catch (err) {
       console.error(err);
       setError("Failed to save user ❌");
@@ -218,32 +232,29 @@ export default function UserCard({ uid }) {
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
       </CardContent>
       <CardActions>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={saving}
-        >
-          {saving ? "Saving..." : "Save"}
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleDelete}
-        >
-          Delete
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleDisable}
-        >
-          Disable
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleEnable}
-        >
-          Enable
-        </Button>
-      </CardActions>
+        <Stack direction="row" spacing={2}>
+          <IconButton
+            variant="contained"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? <CircularProgress size={20}/> : <Save />}
+          </IconButton>
+          
+          <IconButton
+            onClick={handleDelete}
+          >
+            <Delete />
+          </IconButton>
+        <Switch
+          checked={isEnabled}
+          onChange={(e) =>
+            e.target.checked ? handleEnable() : handleDisable()
+          }
+          color="primary"
+        />
+      </Stack>
+    </CardActions>
     </Card>
   );
 }

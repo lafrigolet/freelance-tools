@@ -329,12 +329,15 @@ export const getUserData = onCall(async ({ auth, data }) => {
 
   let userdata = snap.data();
   delete userdata.uid;
+
+  const userRecord = await getAuth().getUser(uid);
   
   return {
     exists: true,
     uid,
     claims,
     data: userdata,
+    disabled: userRecord.disabled,
   };
 });
 
