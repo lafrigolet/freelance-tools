@@ -39,9 +39,8 @@ import {
 } from "./stripe";
 
 import { cardBrandLogo } from './cardBrandLogo';
-
 import { useAuthContext } from "../auth/AuthContext";
-
+import ConfirmDialog from "../common/ConfirmDialog";
 import AddPaymentMethod from './AddPaymentMethod';
 
 function PaymentMethodsManagerElement({ priceId }) {
@@ -202,39 +201,24 @@ function PaymentMethodsManagerElement({ priceId }) {
         />
       </Card>
 
-      {/* Dialog component */}
-      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, pmId: null })}>
-        <DialogTitle>Delete Payment Method</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete this card? This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialog({ open: false, pmId: null })}>Cancel</Button>
-          {loadingDelete ? (
-            <CircularProgress size={20} />
-          ) : (
-            <Button
-              color="error"
-              onClick={async () => {
-                setLoadingDelete(true);
-                try {
-                  await deletePaymentMethod({ paymentMethodId: deleteDialog.pmId });
-                  const res = await listPaymentMethods({ stripeUID: userData.stripeUID });
-                  setPaymentMethods(res.data.paymentMethods.data);
-                  setDefaultMethod(res.data.defaultPaymentMethod);
-                } finally {
-                  setDeleteDialog({ open: false, pmId: null });
-                  setLoadingDelete(false);
-                }
-              }}
-            >
-              Delete
-            </Button>
-          )}
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        title="Delete Payment Method"
+        content="Are you sure you want to delete this card? This action cannot be undone."
+        open={deleteDialog.open}
+        onCancel={() => setDeleteDialog({ open: false, pmId: null })}
+        onConfirm={async () => {
+          setLoadingDelete(true);
+          try {
+            await deletePaymentMethod({ paymentMethodId: deleteDialog.pmId });
+            const res = await listPaymentMethods({ stripeUID: userData.stripeUID });
+            setPaymentMethods(res.data.paymentMethods.data);
+            setDefaultMethod(res.data.defaultPaymentMethod);
+          } finally {
+            setDeleteDialog({ open: false, pmId: null });
+            setLoadingDelete(false);
+          }
+        }}
+      />
     </>
   );
 }
