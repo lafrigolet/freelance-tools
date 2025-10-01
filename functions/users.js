@@ -66,7 +66,7 @@ export const deleteUser = onCall(async ({ auth, data }) => {
   const uid = userRecord.uid;
 
   // Delete from Firebase Auth
-  await authService.deleteUser(uid);
+  await getAuth().deleteUser(uid);
 
   // Optionally, also delete from Firestore users/{uid}
   await getFirestore().collection("users").doc(uid).delete();
@@ -74,32 +74,26 @@ export const deleteUser = onCall(async ({ auth, data }) => {
   return { message: `User ${email} (uid: ${uid}) deleted.` };
 });
 
+
 // Disable user by email
 export const disableUser = onCall(async ({ auth, data }) => {
   // Only allow admins to disable accounts
   if (auth?.token?.role !== "admin") {
-    throw new Error("Only admins can disable users.");
+    throw new Error("Only admins can enable users.");
   }
 
-  const { email } = data;
-  if (!email) {
-    throw new Error("'email' is required.");
-  }
+  if (!auth?.uid) throw new Error("Not authenticated");
+  const uid = (auth?.token?.role === "helpdesk" && data.uid) || auth?.uid;
 
-  const authService = getAuth();
-
-  // Look up the user by email
-  const userRecord = await authService.getUserByEmail(email);
-  const uid = userRecord.uid;
-
-  // Disable the user
-  await authService.updateUser(uid, { disabled: true });
+    // Disable the user
+  await getAuth().updateUser(uid, { disabled: true });
 
   return {
     success: true,
-    message: `User ${email} has been disabled.`,
+    message: `User has been disabled.`,
   };
 });
+
 
 // Enable user by email
 export const enableUser = onCall(async ({ auth, data }) => {
@@ -108,23 +102,15 @@ export const enableUser = onCall(async ({ auth, data }) => {
     throw new Error("Only admins can enable users.");
   }
 
-  const { email } = data;
-  if (!email) {
-    throw new Error("'email' is required.");
-  }
-
-  const authService = getAuth();
-
-  // Look up the user by email
-  const userRecord = await authService.getUserByEmail(email);
-  const uid = userRecord.uid;
-
+  if (!auth?.uid) throw new Error("Not authenticated");
+  const uid = (auth?.token?.role === "helpdesk" && data.uid) || auth?.uid;
+  console.log("uid ", uid);
   // Disable the user
-  await authService.updateUser(uid, { disabled: false });
+  await getAuth().updateUser(uid, { disabled: false });
 
   return {
     success: true,
-    message: `User ${email} has been disabled.`,
+    message: `User has been enabled.`,
   };
 });
 
@@ -313,38 +299,40 @@ export const registerUser = onCall(async (req) => {
   return { success: true, uid };
 });
 
+
 /**
  * Callable: Get user data by email
  */
-export const getUserData = onCall(async (req) => {
-  const { email } = req.data;
+export const getUserData = onCall(async ({ auth, data }) => {
+  const { email } = data;
   const db = getFirestore();
-  const auth = getAuth();
 
-  if (!email) {
-    throw new Error("Missing email");
-  }
-
-  // Get user UID from Firebase Auth
-  const userRecord = await auth.getUserByEmail(email);
-  const uid = userRecord.uid;
-
+  if (!auth?.uid) throw new Error("Not authenticated");
+  const uid = (auth?.token?.role === "helpdesk" && data.uid) || auth?.uid;
+  
   // Lookup Firestore document by UID
   const ref = db.collection("users").doc(uid);
   const snap = await ref.get();
 
   // Always include claims
-  const claims = userRecord.customClaims || {};
-
+  let claims = auth?.token || {};
+  try {
+    const userRecord = await auth.getUser(uid);
+    claims = userRecord.customClaims || {};
+  } catch (err) {
+    console.warn("Could not fetch userRecord:", err.message);
+  }
+  
   if (!snap.exists) {
     return { exists: false, uid, claims, data: null };
   }
 
-  let userdata= snap.data();
+  let userdata = snap.data();
   delete userdata.uid;
   
   return {
     exists: true,
+    uid,
     claims,
     data: userdata,
   };
@@ -354,26 +342,36 @@ export const getUserData = onCall(async (req) => {
 /**
  * Callable: Set user data by email
  */
-export const setUserData = onCall(async (req) => {
-  const { email, data, claims } = req.data;
+export const setUserData = onCall(async ({ auth, data }) => {
+  const RESERVED_CLAIMS = [
+    "aud",
+    "auth_time",
+    "exp",
+    "iat",
+    "iss",
+    "sub",
+    "firebase"
+  ];
+  const { userData, claims } = data;
   const db = getFirestore();
-  const auth = getAuth();
 
-  if (!email) {
-    throw new Error("Missing email");
-  }
-
-  // Get user UID from Firebase Auth
-  const { uid } = await auth.getUserByEmail(email);
-
+  if (!auth?.uid) throw new Error("Not authenticated");
+  const uid = (auth?.token?.role === "helpdesk" && data.uid) || auth?.uid;
+  
   // Merge user data into Firestore document keyed by UID
-  await db.collection("users").doc(uid).set(data, { merge: true });
+  await db.collection("users").doc(uid).set(userData, { merge: true });
 
   // If claims are provided, update custom user claims
   if (claims && typeof claims === "object") {
-    await auth.setCustomUserClaims(uid, claims);
-  }
+    const filteredClaims = Object.fromEntries(
+      Object.entries(claims).filter(([key]) => !RESERVED_CLAIMS.includes(key))
+    );
 
+    if (Object.keys(filteredClaims).length > 0) {
+      await getAuth().setCustomUserClaims(uid, filteredClaims);
+    }
+  }
+  
   return {
     success: true,
   };

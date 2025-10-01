@@ -29,15 +29,14 @@ import {
 ////// Firebase Functions Wrapping
 const listUsers          = httpsCallable(functions, "listUsers");
 const addUser            = httpsCallable(functions, "addUser");
-const deleteUserF        = httpsCallable(functions, "deleteUser");
+const deleteUser         = httpsCallable(functions, "deleteUser");
 const setUserRole        = httpsCallable(functions, "setUserRole");
 const sendMagicLinkEmail = httpsCallable(functions, "sendMagicLinkEmail");
 const registerUser       = httpsCallable(functions, "registerUser");
 const getUserData        = httpsCallable(functions, "getUserData");
 const setUserData        = httpsCallable(functions, "setUserData");
-const disableUserF       = httpsCallable(functions, "disableUser");
-const enableUserF        = httpsCallable(functions, "enableUser");
-
+const disableUser        = httpsCallable(functions, "disableUser");
+const enableUser         = httpsCallable(functions, "enableUser");
 
 async function waitForUserLinkClick(email) {
   return await new Promise((resolve, reject) => {
@@ -89,31 +88,6 @@ const signUpUser = async ({ email, firstName, lastName, phone }) => {
   return { user, claims: userData.data.claims, userData: userData.data.data };
 }
 
-async function fetchUserData(email) {
-  const res = await getUserData({ email });
-  console.log("res ", res.data);
-  return res.data; 
-  // → { exists: true/false, uid, data: {...} }
-}
-
-async function saveUserData(email, data, claims) {
-  const res = await setUserData({ email, data, claims });
-  return res.success; 
-  // → { success: true, uid }
-}
-
-async function deleteUser(email) {
-  const res = await deleteUserF({email});
-}
-
-async function disableUser(email) {
-  const res = await disableUserF({email});
-}
-
-async function enableUser(email) {
-  const res = await enableUserF({email});
-}
-
 export {
   listUsers,
   addUser,
@@ -122,8 +96,8 @@ export {
   signUpUser,
   loginUser,
   registerUser,
-  fetchUserData,
-  saveUserData,
+  getUserData,
+  setUserData,
   disableUser,
   enableUser,
 };

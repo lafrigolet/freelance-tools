@@ -11,14 +11,14 @@ import {
   Grid,
 } from "@mui/material";
 import {
-  fetchUserData,
-  saveUserData,
+  getUserData,
+  setUserData,
   deleteUser,
   disableUser,
   enableUser,
 } from "./users";
 
-export default function UserCard({ email }) {
+export default function UserCard({ uid }) {
   const [user, setUser] = useState(null);
   const [claims, setClaims] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,30 +27,28 @@ export default function UserCard({ email }) {
   const [info, setInfo] = useState(null);
 
   useEffect(() => {
-    if (!email) return;
     async function load() {
       setLoading(true);
       setError(null);
       setInfo(null);
       try {
-        const { exists, data, claims } = await fetchUserData(email);
+        const res = await getUserData({ uid });
+        const { exists, data, claims } = res.data;
         if (!exists) {
           setError("User not found");
         } else {
-          console.log("data ", data);
-          console.log("role ", claims.role);
           setUser(data);
           setClaims(claims);
         }
       } catch (err) {
         console.error(err);
-        setError("Failed to fetch user");
+        setError("Failed to get user");
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [email]);
+  }, [uid]);
 
   const handleChange = (field) => (e) => {
     setUser((prev) => ({ ...prev, [field]: e.target.value }));
@@ -67,12 +65,11 @@ export default function UserCard({ email }) {
   };
 
   const handleSave = async () => {
-    if (!email || !user) return;
     setSaving(true);
     setError(null);
     setInfo(null);
     try {
-      await saveUserData(email, user, claims);
+      await setUserData({uid , userData:user, claims});
       setInfo("User updated successfully ✅");
     } catch (err) {
       console.error(err);
@@ -83,12 +80,11 @@ export default function UserCard({ email }) {
   };
 
   const handleDelete = async () => {
-    if (!email || !user) return;
     setSaving(true);
     setError(null);
     setInfo(null);
     try {
-      await deleteUser(email);
+      await deleteUser({ uid });
       setInfo("User updated successfully ✅");
     } catch (err) {
       console.error(err);
@@ -99,12 +95,11 @@ export default function UserCard({ email }) {
   };
 
   const handleDisable = async () => {
-    if (!email || !user) return;
     setSaving(true);
     setError(null);
     setInfo(null);
     try {
-      await disableUser(email);
+      await disableUser({ uid });
       setInfo("User updated successfully ✅");
     } catch (err) {
       console.error(err);
@@ -115,12 +110,11 @@ export default function UserCard({ email }) {
   };
 
   const handleEnable = async () => {
-    if (!email || !user) return;
     setSaving(true);
     setError(null);
     setInfo(null);
     try {
-      await enableUser(email);
+      await enableUser({ uid });
       setInfo("User updated successfully ✅");
     } catch (err) {
       console.error(err);
@@ -151,7 +145,7 @@ export default function UserCard({ email }) {
               disabled
             />
           </Grid>
-          <Grid size={{ xs: 2}}>
+          <Grid size={{ xs: 3}}>
             <TextField
               label="Role"
               value={claims?.role || ""}
@@ -205,7 +199,7 @@ export default function UserCard({ email }) {
         </Grid>
 
         <Grid container spacing={2}>
-          <Grid size={{ xs: 4}}>
+          <Grid size={{ xs: 5}}>
             <TextField
               label="Created At"
               value={
